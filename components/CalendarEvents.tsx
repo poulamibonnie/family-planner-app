@@ -33,7 +33,7 @@ export default function CalendarEvents({ events, userId, familyId, scope, onRefr
       const eventMs = new Date(`${ev.date}T${ev.time || '00:00'}`).getTime();
       const notifyAt = eventMs - ev.notifyMinutesBefore * 60 * 1000;
       if (now >= notifyAt && now < eventMs + 60_000) {
-        new Notification(`🌸 ${ev.title}`, {
+        new Notification(ev.title, {
           body: `${ev.time ? `at ${ev.time} — ` : ''}${ev.description || 'Upcoming event'}`,
           icon: '/favicon.ico',
         });
@@ -101,7 +101,7 @@ export default function CalendarEvents({ events, userId, familyId, scope, onRefr
 
       {showForm && (
         <form onSubmit={handleSubmit} className="rounded-2xl border border-red-100 bg-red-50 p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-red-900">New Event · 新しいイベント</h3>
+          <h3 className="text-sm font-semibold text-red-900">New Event</h3>
           <input
             required value={title} onChange={e => setTitle(e.target.value)}
             placeholder="Event title"
@@ -145,7 +145,7 @@ export default function CalendarEvents({ events, userId, familyId, scope, onRefr
 
       {upcoming.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Upcoming · 予定</h3>
+          <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Upcoming</h3>
           {upcoming.map(ev => <EventCard key={ev.id} event={ev} formatDate={formatEventDate} onDelete={() => { deleteCalendarEvent(ev.id); onRefresh(); }} />)}
         </div>
       )}

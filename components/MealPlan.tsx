@@ -65,7 +65,7 @@ export default function MealPlan({ familyId }: Props) {
         </button>
         <div className="text-center">
           <p className="text-sm font-semibold text-stone-700">Week {week}, {year}</p>
-          {isCurrentWeek && <span className="text-xs text-red-700 font-medium">今週 · This Week</span>}
+          {isCurrentWeek && <span className="text-xs text-red-700 font-medium">This Week</span>}
         </div>
         <button onClick={nextWeek} className="rounded-lg border border-stone-200 p-2 text-stone-500 hover:bg-stone-100 transition">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16">
@@ -125,7 +125,7 @@ export default function MealPlan({ familyId }: Props) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-stone-400 text-center">Click any cell to edit · クリックして編集</p>
+      <p className="text-xs text-stone-400 text-center">Click any cell to edit</p>
     </div>
   );
 }

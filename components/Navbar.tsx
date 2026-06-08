@@ -29,10 +29,7 @@ export default function Navbar({ user }: Props) {
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-base">
             🌸
           </div>
-          <div className="hidden sm:block">
-            <span className="font-bold text-white tracking-wide">FamilyPlanner</span>
-            <span className="ml-2 text-xs text-red-300 font-medium">家族</span>
-          </div>
+          <span className="hidden sm:block font-bold text-white tracking-wide">FamilyPlanner</span>
         </Link>
 
         {/* Mode Toggle */}

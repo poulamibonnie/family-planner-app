@@ -17,12 +17,12 @@ import CalendarEvents from '@/components/CalendarEvents';
 
 type Tab = 'tasks' | 'goals' | 'shopping' | 'meals' | 'calendar';
 
-const TABS: { key: Tab; label: string; jp: string; emoji: string }[] = [
-  { key: 'tasks',    label: 'Tasks',     jp: 'タスク', emoji: '🗒️' },
-  { key: 'goals',    label: 'Goals',     jp: '目標',   emoji: '🎯' },
-  { key: 'shopping', label: 'Shopping',  jp: '買い物', emoji: '🛒' },
-  { key: 'meals',    label: 'Meal Plan', jp: '食事',   emoji: '🍱' },
-  { key: 'calendar', label: 'Calendar',  jp: '暦',     emoji: '📅' },
+const TABS: { key: Tab; label: string; emoji: string }[] = [
+  { key: 'tasks',    label: 'Tasks',     emoji: '🗒️' },
+  { key: 'goals',    label: 'Goals',     emoji: '🎯' },
+  { key: 'shopping', label: 'Shopping',  emoji: '🛒' },
+  { key: 'meals',    label: 'Meal Plan', emoji: '🍱' },
+  { key: 'calendar', label: 'Calendar',  emoji: '📅' },
 ];
 
 export default function FamilyPage() {
@@ -62,7 +62,7 @@ export default function FamilyPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">Family Mode · 家族モード</h1>
+          <h1 className="text-2xl font-bold text-stone-900">Family Mode</h1>
           <p className="mt-1 text-sm text-stone-500">Create or join a family to get started</p>
         </div>
         <FamilyManager user={user} family={undefined} onFamilyChange={load} />
@@ -81,13 +81,13 @@ export default function FamilyPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-stone-900">{family.name} 🏮</h1>
-          <p className="mt-1 text-sm text-stone-500">Shared family dashboard · 家族ダッシュボード</p>
+          <p className="mt-1 text-sm text-stone-500">Shared family dashboard</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <StatBadge label="タスク" sub="Tasks"   value={`${tasksDone}/${todos.length}`}      color="red" />
-          <StatBadge label="週間"  sub="Week"    value={`${weekDone}/${weeklyGoals.length}`}  color="rose" />
-          <StatBadge label="年間"  sub="Year"    value={`${yearDone}/${yearlyGoals.length}`}  color="amber" />
-          <StatBadge label="買い物" sub="Shop"    value={`${shopDone}/${shopping.length}`}     color="emerald" />
+          <StatBadge label="Tasks" value={`${tasksDone}/${todos.length}`}      color="red" />
+          <StatBadge label="Week"  value={`${weekDone}/${weeklyGoals.length}`} color="rose" />
+          <StatBadge label="Year"  value={`${yearDone}/${yearlyGoals.length}`} color="amber" />
+          <StatBadge label="Shop"  value={`${shopDone}/${shopping.length}`}    color="emerald" />
         </div>
       </div>
 
@@ -111,8 +111,7 @@ export default function FamilyPage() {
             }`}
           >
             <span>{t.emoji}</span>
-            <span className="hidden sm:inline">{t.label}</span>
-            <span className="sm:hidden">{t.jp}</span>
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
@@ -122,7 +121,7 @@ export default function FamilyPage() {
         {tab === 'tasks' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-stone-800">Shared Tasks · 共有タスク</h2>
+              <h2 className="text-lg font-semibold text-stone-800">Shared Tasks</h2>
               <span className="rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-medium text-red-700">Week {week}</span>
             </div>
             <TodoList
@@ -139,7 +138,7 @@ export default function FamilyPage() {
           <div className="space-y-8">
             <div>
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-stone-800">Weekly Goals · 週間目標</h2>
+                <h2 className="text-lg font-semibold text-stone-800">Weekly Goals</h2>
                 <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
               </div>
               <GoalList
@@ -151,7 +150,7 @@ export default function FamilyPage() {
             </div>
             <div className="border-t border-stone-100 pt-8">
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-stone-800">Yearly Goals · 年間目標</h2>
+                <h2 className="text-lg font-semibold text-stone-800">Yearly Goals</h2>
                 <span className="rounded-full bg-amber-50 border border-amber-100 px-3 py-1 text-xs font-medium text-amber-700">{year}</span>
               </div>
               <GoalList
@@ -167,7 +166,7 @@ export default function FamilyPage() {
         {tab === 'shopping' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">Shopping List · 買い物リスト</h2>
+              <h2 className="text-lg font-semibold text-stone-800">Shopping List</h2>
               <p className="text-sm text-stone-500 mt-1">Shared list for the whole family</p>
             </div>
             <ShoppingList
@@ -182,7 +181,7 @@ export default function FamilyPage() {
         {tab === 'meals' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">Meal Plan · 食事計画</h2>
+              <h2 className="text-lg font-semibold text-stone-800">Meal Plan</h2>
               <p className="text-sm text-stone-500 mt-1">Plan your family&apos;s meals for the week</p>
             </div>
             <MealPlan familyId={family.id} />
@@ -192,7 +191,7 @@ export default function FamilyPage() {
         {tab === 'calendar' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">Family Calendar · 家族の予定</h2>
+              <h2 className="text-lg font-semibold text-stone-800">Family Calendar</h2>
               <p className="text-sm text-stone-500 mt-1">Shared events with browser notifications</p>
             </div>
             <CalendarEvents events={events} userId={user.id} familyId={family.id} scope="family" onRefresh={load} />
@@ -203,7 +202,7 @@ export default function FamilyPage() {
       {/* Family settings collapsible */}
       <details className="rounded-2xl border border-stone-100 bg-white shadow-sm">
         <summary className="cursor-pointer px-6 py-4 text-sm font-medium text-stone-700 hover:text-stone-900 list-none flex items-center gap-2">
-          <span>⚙️</span> Family Settings · 家族設定
+          <span>⚙️</span> Family Settings
         </summary>
         <div className="px-6 pb-6">
           <FamilyManager user={user} family={family} onFamilyChange={load} />
@@ -213,7 +212,7 @@ export default function FamilyPage() {
   );
 }
 
-function StatBadge({ label, sub, value, color }: { label: string; sub: string; value: string; color: 'red' | 'rose' | 'amber' | 'emerald' }) {
+function StatBadge({ label, value, color }: { label: string; value: string; color: 'red' | 'rose' | 'amber' | 'emerald' }) {
   const cls = {
     red:     'bg-red-50 text-red-800 border-red-100',
     rose:    'bg-rose-50 text-rose-800 border-rose-100',
@@ -223,7 +222,6 @@ function StatBadge({ label, sub, value, color }: { label: string; sub: string; v
   return (
     <div className={`rounded-xl border px-3 py-2 text-center ${cls}`}>
       <p className="text-xs font-bold">{label}</p>
-      <p className="text-xs opacity-60">{sub}</p>
       <p className="text-sm font-bold mt-0.5">{value}</p>
     </div>
   );

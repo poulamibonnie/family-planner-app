@@ -13,11 +13,11 @@ import CalendarEvents from '@/components/CalendarEvents';
 
 type Tab = 'today' | 'weekly' | 'yearly' | 'calendar';
 
-const TABS: { key: Tab; label: string; jp: string; emoji: string }[] = [
-  { key: 'today',    label: 'Today',        jp: '今日',  emoji: '🗒️' },
-  { key: 'weekly',   label: 'Weekly Goals', jp: '週間',  emoji: '🌸' },
-  { key: 'yearly',   label: 'Yearly Goals', jp: '年間',  emoji: '⛩️' },
-  { key: 'calendar', label: 'Calendar',     jp: '暦',    emoji: '📅' },
+const TABS: { key: Tab; label: string; emoji: string }[] = [
+  { key: 'today',    label: 'Today',        emoji: '🗒️' },
+  { key: 'weekly',   label: 'Weekly Goals', emoji: '🌸' },
+  { key: 'yearly',   label: 'Yearly Goals', emoji: '⛩️' },
+  { key: 'calendar', label: 'Calendar',     emoji: '📅' },
 ];
 
 export default function SelfPage() {
@@ -61,9 +61,9 @@ export default function SelfPage() {
           <p className="mt-1 text-sm text-stone-500">{formatDisplayDate(today)}</p>
         </div>
         <div className="hidden sm:flex gap-2">
-          <StatBadge label="今日" sub="Today"   value={`${todayDone}/${todos.length}`}       color="red" />
-          <StatBadge label="週間" sub="Week"    value={`${weekDone}/${weeklyGoals.length}`}  color="rose" />
-          <StatBadge label="年間" sub="Year"    value={`${yearDone}/${yearlyGoals.length}`}  color="amber" />
+          <StatBadge label="Today" value={`${todayDone}/${todos.length}`}      color="red" />
+          <StatBadge label="Week"  value={`${weekDone}/${weeklyGoals.length}`} color="rose" />
+          <StatBadge label="Year"  value={`${yearDone}/${yearlyGoals.length}`} color="amber" />
         </div>
       </div>
 
@@ -78,8 +78,7 @@ export default function SelfPage() {
             }`}
           >
             <span>{t.emoji}</span>
-            <span className="hidden sm:inline">{t.label}</span>
-            <span className="sm:hidden">{t.jp}</span>
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
@@ -89,7 +88,7 @@ export default function SelfPage() {
         {tab === 'today' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-stone-800">Today&apos;s Tasks · 今日のタスク</h2>
+              <h2 className="text-lg font-semibold text-stone-800">Today&apos;s Tasks</h2>
               <span className="rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-medium text-red-700">Week {week}</span>
             </div>
             <TodoList
@@ -105,7 +104,7 @@ export default function SelfPage() {
         {tab === 'weekly' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-stone-800">Weekly Goals · 週間目標</h2>
+              <h2 className="text-lg font-semibold text-stone-800">Weekly Goals</h2>
               <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
             </div>
             <GoalList
@@ -120,7 +119,7 @@ export default function SelfPage() {
         {tab === 'yearly' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-stone-800">Yearly Goals · 年間目標</h2>
+              <h2 className="text-lg font-semibold text-stone-800">Yearly Goals</h2>
               <span className="rounded-full bg-amber-50 border border-amber-100 px-3 py-1 text-xs font-medium text-amber-700">{year}</span>
             </div>
             <GoalList
@@ -135,7 +134,7 @@ export default function SelfPage() {
         {tab === 'calendar' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">My Calendar · 私の予定</h2>
+              <h2 className="text-lg font-semibold text-stone-800">My Calendar</h2>
               <p className="text-sm text-stone-500 mt-1">Personal events with browser notifications</p>
             </div>
             <CalendarEvents events={events} userId={user.id} scope="self" onRefresh={load} />
@@ -146,12 +145,11 @@ export default function SelfPage() {
   );
 }
 
-function StatBadge({ label, sub, value, color }: { label: string; sub: string; value: string; color: 'red' | 'rose' | 'amber' }) {
+function StatBadge({ label, value, color }: { label: string; value: string; color: 'red' | 'rose' | 'amber' }) {
   const cls = { red: 'bg-red-50 text-red-800 border-red-100', rose: 'bg-rose-50 text-rose-800 border-rose-100', amber: 'bg-amber-50 text-amber-800 border-amber-100' }[color];
   return (
     <div className={`rounded-xl border px-3 py-2 text-center ${cls}`}>
       <p className="text-xs font-bold">{label}</p>
-      <p className="text-xs opacity-60">{sub}</p>
       <p className="text-sm font-bold mt-0.5">{value}</p>
     </div>
   );

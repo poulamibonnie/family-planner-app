@@ -31,7 +31,7 @@ export default function RegisterPage() {
             🌸
           </div>
           <h1 className="text-2xl font-bold text-stone-900">Create Account</h1>
-          <p className="mt-1 text-sm text-stone-500">家族プランナー · Join FamilyPlanner today</p>
+          <p className="mt-1 text-sm text-stone-500">Join FamilyPlanner today</p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm space-y-5">

@@ -92,7 +92,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-lg font-bold text-stone-900">{family.name}</h2>
-              <p className="text-sm text-stone-600">{members.length} member{members.length !== 1 ? 's' : ''} · 家族</p>
+              <p className="text-sm text-stone-600">{members.length} member{members.length !== 1 ? 's' : ''}</p>
             </div>
             <button onClick={handleLeave} className="text-xs text-red-600 hover:text-red-800 transition">
               Leave family
@@ -101,7 +101,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
 
           <div className="mt-4 flex items-center gap-3">
             <div className="flex-1 rounded-xl border border-stone-200 bg-white px-4 py-2.5">
-              <p className="text-xs text-stone-500 mb-0.5">Invite Code · 招待コード</p>
+              <p className="text-xs text-stone-500 mb-0.5">Invite Code</p>
               <p className="font-mono text-lg font-bold tracking-widest text-red-800">{family.code}</p>
             </div>
             <button
@@ -119,7 +119,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
         <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-lg">📨</span>
-            <h3 className="text-sm font-semibold text-stone-700">Invite via Email · メール招待</h3>
+            <h3 className="text-sm font-semibold text-stone-700">Invite via Email</h3>
           </div>
 
           <form onSubmit={addInviteEmail} className="flex gap-2">
@@ -172,7 +172,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
 
         {/* Members */}
         <div className="rounded-2xl border border-stone-100 bg-white p-5 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-stone-700">Members · メンバー</h3>
+          <h3 className="mb-3 text-sm font-semibold text-stone-700">Members</h3>
           <ul className="space-y-2">
             {members.map(m => (
               <li key={m.id} className="flex items-center gap-3">
@@ -205,7 +205,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
           🏮
         </div>
         <h2 className="text-lg font-bold text-stone-800">Join or Create a Family</h2>
-        <p className="mt-1 text-sm text-stone-500">家族に参加または作成する</p>
+        <p className="mt-1 text-sm text-stone-500">Collaborate with your family on tasks, meals, and goals</p>
 
         {mode === 'idle' && (
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -224,7 +224,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
 
       {mode === 'create' && (
         <form onSubmit={handleCreate} className="rounded-2xl border border-red-100 bg-red-50 p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-red-900">Create a New Family · 新しい家族を作る</h3>
+          <h3 className="text-sm font-semibold text-red-900">Create a New Family</h3>
           <input autoFocus required value={familyName} onChange={e => setFamilyName(e.target.value)}
             placeholder="Family name (e.g. The Smiths)"
             className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm text-stone-800 outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
@@ -238,7 +238,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
 
       {mode === 'join' && (
         <form onSubmit={handleJoin} className="rounded-2xl border border-stone-200 bg-stone-50 p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-stone-800">Join with Invite Code · 招待コードで参加</h3>
+          <h3 className="text-sm font-semibold text-stone-800">Join with Invite Code</h3>
           <input autoFocus required value={joinCode} onChange={e => { setJoinCode(e.target.value.toUpperCase()); setError(''); }}
             placeholder="Enter 6-character code"
             maxLength={6}

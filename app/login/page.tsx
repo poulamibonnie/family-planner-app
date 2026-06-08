@@ -35,7 +35,7 @@ export default function LoginPage() {
             🌸
           </div>
           <h1 className="text-2xl font-bold text-stone-900">FamilyPlanner</h1>
-          <p className="mt-1 text-sm text-stone-500">家族プランナー · Sign in to your account</p>
+          <p className="mt-1 text-sm text-stone-500">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm space-y-5">
