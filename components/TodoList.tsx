@@ -30,18 +30,19 @@ export default function TodoList({ items, onAdd, onToggle, onDelete, placeholder
           value={text}
           onChange={e => setText(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 shadow-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="flex-1 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-800 placeholder-stone-400 shadow-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
         />
         <button
           type="submit"
-          className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 active:scale-95"
+          className="rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}
         >
           Add
         </button>
       </form>
 
       {items.length > 0 && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-stone-500">
           {done}/{items.length} completed
         </p>
       )}
@@ -50,14 +51,14 @@ export default function TodoList({ items, onAdd, onToggle, onDelete, placeholder
         {items.map(item => (
           <li
             key={item.id}
-            className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm transition hover:border-indigo-100"
+            className="group flex items-center gap-3 rounded-xl border border-stone-100 bg-white px-4 py-3 shadow-sm transition hover:border-red-100"
           >
             <button
               onClick={() => onToggle(item.id)}
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
                 item.completed
-                  ? 'border-indigo-500 bg-indigo-500'
-                  : 'border-slate-300 hover:border-indigo-400'
+                  ? 'border-red-700 bg-red-700'
+                  : 'border-stone-300 hover:border-red-400'
               }`}
             >
               {item.completed && (
@@ -66,12 +67,12 @@ export default function TodoList({ items, onAdd, onToggle, onDelete, placeholder
                 </svg>
               )}
             </button>
-            <span className={`flex-1 text-sm ${item.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+            <span className={`flex-1 text-sm ${item.completed ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
               {item.text}
             </span>
             <button
               onClick={() => onDelete(item.id)}
-              className="hidden text-slate-300 transition hover:text-red-400 group-hover:block"
+              className="hidden text-stone-300 transition hover:text-red-400 group-hover:block"
             >
               <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
                 <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -82,10 +83,8 @@ export default function TodoList({ items, onAdd, onToggle, onDelete, placeholder
       </ul>
 
       {items.length === 0 && (
-        <div className="flex flex-col items-center py-10 text-slate-400">
-          <svg className="mb-2 h-10 w-10 opacity-30" fill="none" viewBox="0 0 24 24">
-            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+        <div className="flex flex-col items-center py-10 text-stone-400">
+          <span className="mb-2 text-4xl opacity-40">🗒️</span>
           <p className="text-sm">No tasks yet — add one above</p>
         </div>
       )}

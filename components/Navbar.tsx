@@ -21,25 +21,29 @@ export default function Navbar({ user }: Props) {
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg">
+    <header className="sticky top-0 z-30 shadow-lg" style={{ background: 'linear-gradient(135deg, #1c1917 0%, #7f1d1d 60%, #991b1b 100%)' }}>
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
+
         {/* Logo */}
-        <Link href="/dashboard/self" className="flex items-center gap-2 shrink-0">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-              <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+        <Link href="/dashboard/self" className="flex items-center gap-2.5 shrink-0">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-base">
+            🌸
           </div>
-          <span className="hidden font-bold text-white sm:block">FamilyPlanner</span>
+          <div className="hidden sm:block">
+            <span className="font-bold text-white tracking-wide">FamilyPlanner</span>
+            <span className="ml-2 text-xs text-red-300 font-medium">家族</span>
+          </div>
         </Link>
 
         {/* Mode Toggle */}
         <div className="flex flex-1 justify-center">
-          <div className="flex rounded-xl bg-white/15 p-1 gap-1">
+          <div className="flex rounded-xl bg-white/10 border border-white/15 p-1 gap-1">
             <Link
               href="/dashboard/self"
               className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-                isSelf ? 'bg-white text-indigo-700 shadow-sm' : 'text-white/80 hover:text-white hover:bg-white/10'
+                isSelf
+                  ? 'bg-white text-stone-800 shadow-sm'
+                  : 'text-white/75 hover:text-white hover:bg-white/10'
               }`}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -50,7 +54,9 @@ export default function Navbar({ user }: Props) {
             <Link
               href="/dashboard/family"
               className={`flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition ${
-                isFamily ? 'bg-white text-indigo-700 shadow-sm' : 'text-white/80 hover:text-white hover:bg-white/10'
+                isFamily
+                  ? 'bg-white text-stone-800 shadow-sm'
+                  : 'text-white/75 hover:text-white hover:bg-white/10'
               }`}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
@@ -65,14 +71,14 @@ export default function Navbar({ user }: Props) {
         <div className="flex shrink-0 items-center gap-3">
           <div className="hidden sm:block text-right">
             <p className="text-sm font-semibold text-white leading-none">{user.name}</p>
-            <p className="text-xs text-white/60">{user.email}</p>
+            <p className="text-xs text-red-300">{user.email}</p>
           </div>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-800/60 border border-red-600/40 text-sm font-bold text-white">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <button
             onClick={logout}
-            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+            className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
           >
             Logout
           </button>

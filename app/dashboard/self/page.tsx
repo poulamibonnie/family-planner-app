@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getCurrentUser, getSelfTodos, addTodo, toggleTodo, deleteTodo, getSelfGoals, addGoal, toggleGoal, deleteGoal, getSelfEvents, addCalendarEvent, deleteCalendarEvent, markEventNotified } from '@/lib/store';
+import {
+  getCurrentUser, getSelfTodos, addTodo, toggleTodo, deleteTodo,
+  getSelfGoals, addGoal, toggleGoal, deleteGoal, getSelfEvents,
+} from '@/lib/store';
 import type { User, TodoItem, Goal, CalendarEvent } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate } from '@/lib/utils';
 import TodoList from '@/components/TodoList';
@@ -10,27 +13,11 @@ import CalendarEvents from '@/components/CalendarEvents';
 
 type Tab = 'today' | 'weekly' | 'yearly' | 'calendar';
 
-const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
-  {
-    key: 'today',
-    label: "Today",
-    icon: <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-  },
-  {
-    key: 'weekly',
-    label: "Weekly Goals",
-    icon: <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
-  },
-  {
-    key: 'yearly',
-    label: "Yearly Goals",
-    icon: <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" stroke="currentColor" strokeWidth="1.5" /></svg>,
-  },
-  {
-    key: 'calendar',
-    label: "Calendar",
-    icon: <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-  },
+const TABS: { key: Tab; label: string; jp: string; emoji: string }[] = [
+  { key: 'today',    label: 'Today',        jp: '今日',  emoji: '🗒️' },
+  { key: 'weekly',   label: 'Weekly Goals', jp: '週間',  emoji: '🌸' },
+  { key: 'yearly',   label: 'Yearly Goals', jp: '年間',  emoji: '⛩️' },
+  { key: 'calendar', label: 'Calendar',     jp: '暦',    emoji: '📅' },
 ];
 
 export default function SelfPage() {
@@ -59,51 +46,51 @@ export default function SelfPage() {
 
   if (!user) return null;
 
-  const weekDone = weeklyGoals.filter(g => g.completed).length;
-  const yearDone = yearlyGoals.filter(g => g.completed).length;
-  const todayDone = todos.filter(t => t.completed).length;
+  const todayDone  = todos.filter(t => t.completed).length;
+  const weekDone   = weeklyGoals.filter(g => g.completed).length;
+  const yearDone   = yearlyGoals.filter(g => g.completed).length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Good {greeting()}, {user.name.split(' ')[0]} 👋</h1>
-          <p className="mt-1 text-sm text-slate-500">{formatDisplayDate(today)}</p>
+          <h1 className="text-2xl font-bold text-stone-900">
+            {greeting()}, {user.name.split(' ')[0]} 🌸
+          </h1>
+          <p className="mt-1 text-sm text-stone-500">{formatDisplayDate(today)}</p>
         </div>
-        {/* Quick stats */}
-        <div className="hidden sm:flex gap-3">
-          <StatBadge label="Today" value={`${todayDone}/${todos.length}`} color="indigo" />
-          <StatBadge label="Week" value={`${weekDone}/${weeklyGoals.length}`} color="violet" />
-          <StatBadge label="Year" value={`${yearDone}/${yearlyGoals.length}`} color="amber" />
+        <div className="hidden sm:flex gap-2">
+          <StatBadge label="今日" sub="Today"   value={`${todayDone}/${todos.length}`}       color="red" />
+          <StatBadge label="週間" sub="Week"    value={`${weekDone}/${weeklyGoals.length}`}  color="rose" />
+          <StatBadge label="年間" sub="Year"    value={`${yearDone}/${yearlyGoals.length}`}  color="amber" />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl bg-slate-100 p-1 overflow-x-auto">
+      <div className="flex gap-1 rounded-xl bg-stone-100 p-1 overflow-x-auto">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex flex-1 min-w-max items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition ${
-              tab === t.key
-                ? 'bg-white text-indigo-700 shadow-sm'
-                : 'text-slate-600 hover:text-slate-800'
+              tab === t.key ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500 hover:text-stone-700'
             }`}
           >
-            {t.icon}
-            {t.label}
+            <span>{t.emoji}</span>
+            <span className="hidden sm:inline">{t.label}</span>
+            <span className="sm:hidden">{t.jp}</span>
           </button>
         ))}
       </div>
 
       {/* Content */}
-      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
         {tab === 'today' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-800">Today&apos;s Tasks</h2>
-              <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">Week {week}</span>
+              <h2 className="text-lg font-semibold text-stone-800">Today&apos;s Tasks · 今日のタスク</h2>
+              <span className="rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-medium text-red-700">Week {week}</span>
             </div>
             <TodoList
               items={todos}
@@ -118,13 +105,11 @@ export default function SelfPage() {
         {tab === 'weekly' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-800">Weekly Goals</h2>
-              <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">Week {week} · {year}</span>
+              <h2 className="text-lg font-semibold text-stone-800">Weekly Goals · 週間目標</h2>
+              <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
             </div>
             <GoalList
-              items={weeklyGoals}
-              title="This week's goals"
-              accentColor="violet"
+              items={weeklyGoals} title="This week's goals" accentColor="rose"
               onAdd={text => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, userId: user.id, scope: 'self' }); load(); }}
               onToggle={id => { toggleGoal(id); load(); }}
               onDelete={id => { deleteGoal(id); load(); }}
@@ -135,13 +120,11 @@ export default function SelfPage() {
         {tab === 'yearly' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-800">Yearly Goals</h2>
-              <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">{year}</span>
+              <h2 className="text-lg font-semibold text-stone-800">Yearly Goals · 年間目標</h2>
+              <span className="rounded-full bg-amber-50 border border-amber-100 px-3 py-1 text-xs font-medium text-amber-700">{year}</span>
             </div>
             <GoalList
-              items={yearlyGoals}
-              title={`Goals for ${year}`}
-              accentColor="amber"
+              items={yearlyGoals} title={`Goals for ${year}`} accentColor="amber"
               onAdd={text => { addGoal({ text, completed: false, type: 'yearly', year, userId: user.id, scope: 'self' }); load(); }}
               onToggle={id => { toggleGoal(id); load(); }}
               onDelete={id => { deleteGoal(id); load(); }}
@@ -152,15 +135,10 @@ export default function SelfPage() {
         {tab === 'calendar' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-slate-800">My Calendar</h2>
-              <p className="text-sm text-slate-500 mt-1">Personal events with browser notifications</p>
+              <h2 className="text-lg font-semibold text-stone-800">My Calendar · 私の予定</h2>
+              <p className="text-sm text-stone-500 mt-1">Personal events with browser notifications</p>
             </div>
-            <CalendarEvents
-              events={events}
-              userId={user.id}
-              scope="self"
-              onRefresh={load}
-            />
+            <CalendarEvents events={events} userId={user.id} scope="self" onRefresh={load} />
           </div>
         )}
       </div>
@@ -168,23 +146,20 @@ export default function SelfPage() {
   );
 }
 
-function StatBadge({ label, value, color }: { label: string; value: string; color: 'indigo' | 'violet' | 'amber' }) {
-  const cls = {
-    indigo: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    violet: 'bg-violet-50 text-violet-700 border-violet-100',
-    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-  }[color];
+function StatBadge({ label, sub, value, color }: { label: string; sub: string; value: string; color: 'red' | 'rose' | 'amber' }) {
+  const cls = { red: 'bg-red-50 text-red-800 border-red-100', rose: 'bg-rose-50 text-rose-800 border-rose-100', amber: 'bg-amber-50 text-amber-800 border-amber-100' }[color];
   return (
     <div className={`rounded-xl border px-3 py-2 text-center ${cls}`}>
-      <p className="text-xs font-medium opacity-70">{label}</p>
-      <p className="text-sm font-bold">{value}</p>
+      <p className="text-xs font-bold">{label}</p>
+      <p className="text-xs opacity-60">{sub}</p>
+      <p className="text-sm font-bold mt-0.5">{value}</p>
     </div>
   );
 }
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return 'morning';
-  if (h < 17) return 'afternoon';
-  return 'evening';
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
 }
