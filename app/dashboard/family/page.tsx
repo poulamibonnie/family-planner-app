@@ -199,7 +199,7 @@ export default function FamilyPage() {
               <h2 className="text-lg font-semibold text-stone-800">Family Calendar</h2>
               <p className="text-sm text-stone-500 mt-1">Shared events with browser notifications</p>
             </div>
-            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} userId={user.id} familyId={family.id} scope="family" onRefresh={load} />
+            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} yearlyGoals={yearlyGoals} userId={user.id} familyId={family.id} scope="family" onRefresh={load} />
           </div>
         )}
       </div>

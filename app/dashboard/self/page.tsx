@@ -142,7 +142,7 @@ export default function SelfPage() {
               <h2 className="text-lg font-semibold text-stone-800">My Calendar</h2>
               <p className="text-sm text-stone-500 mt-1">Personal events with browser notifications</p>
             </div>
-            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} userId={user.id} scope="self" onRefresh={load} />
+            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} yearlyGoals={yearlyGoals} userId={user.id} scope="self" onRefresh={load} />
           </div>
         )}
       </div>
