@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  getCurrentUser, getFamilyById, getFamilyTodos, addTodo, toggleTodo, deleteTodo,
+  getCurrentUser, getFamilyById, getFamilyTodos, getFamilyAllTodos, addTodo, toggleTodo, deleteTodo,
   getFamilyGoals, addGoal, toggleGoal, deleteGoal, getFamilyShoppingItems,
   addShoppingItem, toggleShoppingItem, deleteShoppingItem, getFamilyEvents, updateUser,
 } from '@/lib/store';
@@ -34,6 +34,7 @@ export default function FamilyPage() {
   const [weeklyGoals, setWeeklyGoals] = useState<Goal[]>([]);
   const [yearlyGoals, setYearlyGoals] = useState<Goal[]>([]);
   const [shopping, setShopping] = useState<ShoppingItem[]>([]);
+  const [allTodos, setAllTodos] = useState<TodoItem[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const today = todayISO();
@@ -51,6 +52,7 @@ export default function FamilyPage() {
       setWeeklyGoals(getFamilyGoals(f.id, 'weekly', week, year));
       setYearlyGoals(getFamilyGoals(f.id, 'yearly', undefined, year));
       setShopping(getFamilyShoppingItems(f.id));
+      setAllTodos(getFamilyAllTodos(f.id));
       setEvents(getFamilyEvents(f.id));
     }
   }, [today, week, year]);
@@ -197,7 +199,7 @@ export default function FamilyPage() {
               <h2 className="text-lg font-semibold text-stone-800">Family Calendar</h2>
               <p className="text-sm text-stone-500 mt-1">Shared events with browser notifications</p>
             </div>
-            <CalendarEvents events={events} userId={user.id} familyId={family.id} scope="family" onRefresh={load} />
+            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} userId={user.id} familyId={family.id} scope="family" onRefresh={load} />
           </div>
         )}
       </div>

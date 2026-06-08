@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  getCurrentUser, getSelfTodos, addTodo, toggleTodo, deleteTodo,
+  getCurrentUser, getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo,
   getSelfGoals, addGoal, toggleGoal, deleteGoal, getSelfEvents,
 } from '@/lib/store';
 import type { User, TodoItem, Goal, CalendarEvent } from '@/lib/types';
@@ -25,6 +25,7 @@ export default function SelfPage() {
   const [tab, setTab] = useState<Tab>('today');
   const [user, setUser] = useState<User | null>(null);
   const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [allTodos, setAllTodos] = useState<TodoItem[]>([]);
   const [weeklyGoals, setWeeklyGoals] = useState<Goal[]>([]);
   const [yearlyGoals, setYearlyGoals] = useState<Goal[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -38,6 +39,7 @@ export default function SelfPage() {
     if (!u) return;
     setUser(u);
     setTodos(getSelfTodos(u.id, today));
+    setAllTodos(getSelfAllTodos(u.id));
     setWeeklyGoals(getSelfGoals(u.id, 'weekly', week, year));
     setYearlyGoals(getSelfGoals(u.id, 'yearly', undefined, year));
     setEvents(getSelfEvents(u.id));
@@ -140,7 +142,7 @@ export default function SelfPage() {
               <h2 className="text-lg font-semibold text-stone-800">My Calendar</h2>
               <p className="text-sm text-stone-500 mt-1">Personal events with browser notifications</p>
             </div>
-            <CalendarEvents events={events} userId={user.id} scope="self" onRefresh={load} />
+            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} userId={user.id} scope="self" onRefresh={load} />
           </div>
         )}
       </div>

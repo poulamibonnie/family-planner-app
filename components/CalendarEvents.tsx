@@ -1,18 +1,26 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { CalendarEvent } from '@/lib/types';
-import { addCalendarEvent, deleteCalendarEvent, markEventNotified } from '@/lib/store';
+import type { CalendarEvent, TodoItem, Goal } from '@/lib/types';
+import { addCalendarEvent, deleteCalendarEvent, markEventNotified, toggleTodo, toggleGoal } from '@/lib/store';
+import { goalDayToISO } from '@/lib/utils';
 
 interface Props {
   events: CalendarEvent[];
+  todos?: TodoItem[];
+  goals?: Goal[];
   userId: string;
   familyId?: string;
   scope: 'self' | 'family';
   onRefresh: () => void;
 }
 
-export default function CalendarEvents({ events, userId, familyId, scope, onRefresh }: Props) {
+type AgendaItem =
+  | { kind: 'event'; date: string; data: CalendarEvent }
+  | { kind: 'todo';  date: string; data: TodoItem }
+  | { kind: 'goal';  date: string; data: Goal };
+
+export default function CalendarEvents({ events, todos = [], goals = [], userId, familyId, scope, onRefresh }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -63,15 +71,46 @@ export default function CalendarEvents({ events, userId, familyId, scope, onRefr
     onRefresh();
   }
 
-  const sorted = [...events].sort((a, b) =>
-    new Date(`${a.date}T${a.time || '00:00'}`).getTime() - new Date(`${b.date}T${b.time || '00:00'}`).getTime()
-  );
-  const today = new Date().toISOString().split('T')[0];
-  const upcoming = sorted.filter(e => e.date >= today);
-  const past = sorted.filter(e => e.date < today);
+  // Build unified agenda items
+  const agendaItems: AgendaItem[] = [
+    ...events.map(ev => ({ kind: 'event' as const, date: ev.date, data: ev })),
+    ...todos.map(td => ({ kind: 'todo' as const, date: td.date, data: td })),
+    ...goals
+      .filter(g => g.day && g.weekNumber !== undefined)
+      .map(g => ({
+        kind: 'goal' as const,
+        date: goalDayToISO(g.weekNumber!, g.year, g.day!),
+        data: g,
+      })),
+  ];
 
-  function formatEventDate(dateStr: string) {
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const today = new Date().toISOString().split('T')[0];
+  agendaItems.sort((a, b) => a.date.localeCompare(b.date));
+
+  const upcoming = agendaItems.filter(i => i.date >= today);
+  const past     = agendaItems.filter(i => i.date < today);
+
+  // Group by date
+  function groupByDate(items: AgendaItem[]): Map<string, AgendaItem[]> {
+    const map = new Map<string, AgendaItem[]>();
+    for (const item of items) {
+      const arr = map.get(item.date) ?? [];
+      arr.push(item);
+      map.set(item.date, arr);
+    }
+    return map;
+  }
+
+  const upcomingGroups = groupByDate(upcoming);
+  const pastGroups     = groupByDate(past);
+
+  function formatGroupDate(dateStr: string): string {
+    const d = new Date(dateStr + 'T12:00:00');
+    if (dateStr === today) return 'Today';
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if (dateStr === tomorrow.toISOString().split('T')[0]) return 'Tomorrow';
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   }
 
   return (
@@ -143,52 +182,130 @@ export default function CalendarEvents({ events, userId, familyId, scope, onRefr
         </form>
       )}
 
-      {upcoming.length > 0 && (
-        <div className="space-y-2">
+      {/* Legend */}
+      {agendaItems.length > 0 && (
+        <div className="flex flex-wrap gap-3 text-xs text-stone-500">
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-red-500 inline-block" />Event</span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-400 inline-block" />Daily Task</span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500 inline-block" />Weekly Goal</span>
+        </div>
+      )}
+
+      {/* Upcoming agenda */}
+      {upcomingGroups.size > 0 && (
+        <div className="space-y-4">
           <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Upcoming</h3>
-          {upcoming.map(ev => <EventCard key={ev.id} event={ev} formatDate={formatEventDate} onDelete={() => { deleteCalendarEvent(ev.id); onRefresh(); }} />)}
+          {[...upcomingGroups.entries()].map(([dateStr, items]) => (
+            <DayGroup key={dateStr} dateStr={dateStr} label={formatGroupDate(dateStr)} items={items} isToday={dateStr === today} onRefresh={onRefresh} />
+          ))}
         </div>
       )}
 
-      {past.length > 0 && (
-        <div className="space-y-2">
+      {/* Past agenda */}
+      {pastGroups.size > 0 && (
+        <div className="space-y-4">
           <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Past</h3>
-          {past.map(ev => <EventCard key={ev.id} event={ev} formatDate={formatEventDate} past onDelete={() => { deleteCalendarEvent(ev.id); onRefresh(); }} />)}
+          {[...pastGroups.entries()].reverse().map(([dateStr, items]) => (
+            <DayGroup key={dateStr} dateStr={dateStr} label={formatGroupDate(dateStr)} items={items} isToday={false} past onRefresh={onRefresh} />
+          ))}
         </div>
       )}
 
-      {events.length === 0 && !showForm && (
+      {agendaItems.length === 0 && !showForm && (
         <div className="flex flex-col items-center py-10 text-stone-400">
           <span className="mb-2 text-4xl opacity-30">📅</span>
-          <p className="text-sm">No events — add one above</p>
+          <p className="text-sm">No items — add an event or create tasks and goals</p>
         </div>
       )}
     </div>
   );
 }
 
-function EventCard({ event, formatDate, past, onDelete }: { event: CalendarEvent; formatDate: (d: string) => string; past?: boolean; onDelete: () => void }) {
+function DayGroup({ dateStr, label, items, isToday, past, onRefresh }: {
+  dateStr: string; label: string; items: AgendaItem[]; isToday: boolean; past?: boolean; onRefresh: () => void;
+}) {
   return (
-    <div className={`group flex items-start gap-4 rounded-2xl border px-4 py-3 shadow-sm transition ${past ? 'border-stone-100 bg-white opacity-60' : 'border-red-100 bg-white'}`}>
-      <div className={`shrink-0 rounded-xl px-2.5 py-1.5 text-center min-w-[52px] ${past ? 'bg-stone-100' : 'bg-red-50'}`}>
-        <p className={`text-xs font-bold uppercase ${past ? 'text-stone-500' : 'text-red-700'}`}>
-          {new Date(event.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' })}
-        </p>
-        <p className={`text-xl font-bold leading-none ${past ? 'text-stone-600' : 'text-red-800'}`}>
-          {new Date(event.date + 'T00:00:00').getDate()}
-        </p>
+    <div className={`rounded-2xl border ${isToday ? 'border-red-200 bg-red-50/40' : 'border-stone-100 bg-white'} shadow-sm overflow-hidden ${past ? 'opacity-60' : ''}`}>
+      {/* Date header */}
+      <div className={`flex items-center gap-3 px-4 py-2.5 border-b ${isToday ? 'border-red-100 bg-red-50' : 'border-stone-100 bg-stone-50'}`}>
+        <div className={`flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-lg text-center ${isToday ? 'bg-red-600 text-white' : 'bg-stone-200 text-stone-700'}`}>
+          <p className="text-[9px] font-bold uppercase leading-none">
+            {new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' })}
+          </p>
+          <p className="text-sm font-bold leading-none">
+            {new Date(dateStr + 'T12:00:00').getDate()}
+          </p>
+        </div>
+        <p className={`text-sm font-semibold ${isToday ? 'text-red-800' : 'text-stone-700'}`}>{label}</p>
       </div>
+
+      {/* Items */}
+      <ul className="divide-y divide-stone-50">
+        {items.map((item, idx) => (
+          <li key={idx} className="px-4 py-2.5">
+            {item.kind === 'event' && <EventRow event={item.data} onDelete={() => { deleteCalendarEvent(item.data.id); onRefresh(); }} past={past} />}
+            {item.kind === 'todo'  && <TodoRow  todo={item.data}  onToggle={() => { toggleTodo(item.data.id);  onRefresh(); }} past={past} />}
+            {item.kind === 'goal'  && <GoalRow  goal={item.data}  onToggle={() => { toggleGoal(item.data.id);  onRefresh(); }} past={past} />}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function EventRow({ event, onDelete, past }: { event: CalendarEvent; onDelete: () => void; past?: boolean }) {
+  return (
+    <div className="group flex items-center gap-3">
+      <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-stone-800">{event.title}</p>
+        <p className="text-sm font-medium text-stone-800 truncate">{event.title}</p>
         {event.time && <p className="text-xs text-stone-500">{event.time}</p>}
-        {event.description && <p className="text-xs text-stone-500 mt-0.5 truncate">{event.description}</p>}
-        <p className="text-xs text-stone-400 mt-1">Notify {event.notifyMinutesBefore} min before</p>
+        {event.description && <p className="text-xs text-stone-400 truncate">{event.description}</p>}
       </div>
-      <button onClick={onDelete} className="hidden shrink-0 text-stone-300 hover:text-red-400 group-hover:block transition mt-0.5">
-        <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </button>
+      <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-600">Event</span>
+      {!past && (
+        <button onClick={onDelete} className="hidden shrink-0 text-stone-300 hover:text-red-400 group-hover:block transition">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 12 12" fill="none">
+            <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TodoRow({ todo, onToggle, past }: { todo: TodoItem; onToggle: () => void; past?: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <input
+        type="checkbox"
+        checked={todo.completed}
+        onChange={onToggle}
+        disabled={!!past}
+        className="h-4 w-4 shrink-0 cursor-pointer rounded accent-blue-500"
+      />
+      <p className={`flex-1 text-sm truncate ${todo.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>
+        {todo.text}
+      </p>
+      <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-600">Task</span>
+    </div>
+  );
+}
+
+function GoalRow({ goal, onToggle, past }: { goal: Goal; onToggle: () => void; past?: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <input
+        type="checkbox"
+        checked={goal.completed}
+        onChange={onToggle}
+        disabled={!!past}
+        className="h-4 w-4 shrink-0 cursor-pointer rounded accent-emerald-500"
+      />
+      <p className={`flex-1 text-sm truncate ${goal.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>
+        {goal.text}
+      </p>
+      <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">Goal</span>
     </div>
   );
 }

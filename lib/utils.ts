@@ -28,3 +28,13 @@ export function generateId(): string {
 
 export const DAYS: readonly string[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export const MEAL_TYPES: readonly string[] = ['breakfast', 'lunch', 'dinner'];
+
+export function goalDayToISO(weekNumber: number, year: number, day: string): string {
+  const dayIndex = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(day);
+  const jan4 = new Date(year, 0, 4);
+  const monday = new Date(jan4);
+  monday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7) + (weekNumber - 1) * 7);
+  const d = new Date(monday);
+  d.setDate(monday.getDate() + dayIndex);
+  return d.toISOString().split('T')[0];
+}

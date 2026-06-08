@@ -145,8 +145,16 @@ export function getSelfTodos(userId: string, date: string): TodoItem[] {
   return getTodos().filter(t => t.scope === 'self' && t.userId === userId && t.date === date);
 }
 
+export function getSelfAllTodos(userId: string): TodoItem[] {
+  return getTodos().filter(t => t.scope === 'self' && t.userId === userId);
+}
+
 export function getFamilyTodos(familyId: string, date: string): TodoItem[] {
   return getTodos().filter(t => t.scope === 'family' && t.familyId === familyId && t.date === date);
+}
+
+export function getFamilyAllTodos(familyId: string): TodoItem[] {
+  return getTodos().filter(t => t.scope === 'family' && t.familyId === familyId);
 }
 
 // ── Goals ─────────────────────────────────────────────────────────────
