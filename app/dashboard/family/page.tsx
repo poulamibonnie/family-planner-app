@@ -11,6 +11,7 @@ import { todayISO, getWeekNumber, getYear } from '@/lib/utils';
 import FamilyManager from '@/components/FamilyManager';
 import TodoList from '@/components/TodoList';
 import GoalList from '@/components/GoalList';
+import WeeklyBoard from '@/components/WeeklyBoard';
 import ShoppingList from '@/components/ShoppingList';
 import MealPlan from '@/components/MealPlan';
 import CalendarEvents from '@/components/CalendarEvents';
@@ -141,9 +142,11 @@ export default function FamilyPage() {
                 <h2 className="text-lg font-semibold text-stone-800">Weekly Goals</h2>
                 <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
               </div>
-              <GoalList
-                items={weeklyGoals} title="This week" accentColor="rose"
-                onAdd={text => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
+              <WeeklyBoard
+                goals={weeklyGoals}
+                weekNumber={week}
+                year={year}
+                onAdd={(text, day) => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
                 onToggle={id => { toggleGoal(id); load(); }}
                 onDelete={id => { deleteGoal(id); load(); }}
               />
