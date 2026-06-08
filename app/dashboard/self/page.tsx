@@ -9,6 +9,7 @@ import type { User, TodoItem, Goal, CalendarEvent } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate } from '@/lib/utils';
 import TodoList from '@/components/TodoList';
 import GoalList from '@/components/GoalList';
+import WeeklyBoard from '@/components/WeeklyBoard';
 import CalendarEvents from '@/components/CalendarEvents';
 
 type Tab = 'today' | 'weekly' | 'yearly' | 'calendar';
@@ -107,9 +108,11 @@ export default function SelfPage() {
               <h2 className="text-lg font-semibold text-stone-800">Weekly Goals</h2>
               <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
             </div>
-            <GoalList
-              items={weeklyGoals} title="This week's goals" accentColor="rose"
-              onAdd={text => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, userId: user.id, scope: 'self' }); load(); }}
+            <WeeklyBoard
+              goals={weeklyGoals}
+              weekNumber={week}
+              year={year}
+              onAdd={(text, day) => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'self' }); load(); }}
               onToggle={id => { toggleGoal(id); load(); }}
               onDelete={id => { deleteGoal(id); load(); }}
             />

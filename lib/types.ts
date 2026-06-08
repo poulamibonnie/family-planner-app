@@ -34,6 +34,7 @@ export interface Goal {
   type: 'weekly' | 'yearly';
   weekNumber?: number;
   year: number;
+  day?: DayOfWeek;
   userId: string;
   scope: 'self' | 'family';
   familyId?: string;
