@@ -3,22 +3,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   getCurrentUser, getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo,
-  getSelfGoals, addGoal, toggleGoal, deleteGoal, getSelfEvents,
+  getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal, getSelfEvents,
 } from '@/lib/store';
 import type { User, TodoItem, Goal, CalendarEvent } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate } from '@/lib/utils';
 import TodoList from '@/components/TodoList';
 import GoalList from '@/components/GoalList';
 import WeeklyBoard from '@/components/WeeklyBoard';
-import CalendarEvents from '@/components/CalendarEvents';
+import Reminders from '@/components/Reminders';
+import ProgressStats from '@/components/ProgressStats';
 
-type Tab = 'today' | 'weekly' | 'yearly' | 'calendar';
+type Tab = 'today' | 'weekly' | 'yearly' | 'reminders' | 'progress';
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
-  { key: 'today',    label: 'Today',        emoji: '🗒️' },
-  { key: 'weekly',   label: 'Weekly Goals', emoji: '🌸' },
-  { key: 'yearly',   label: 'Yearly Goals', emoji: '⛩️' },
-  { key: 'calendar', label: 'Calendar',     emoji: '📅' },
+  { key: 'today',     label: 'Today',        emoji: '🗒️' },
+  { key: 'weekly',    label: 'Weekly Goals', emoji: '🌸' },
+  { key: 'yearly',    label: 'Yearly Goals', emoji: '⛩️' },
+  { key: 'reminders', label: 'Reminders',    emoji: '🔔' },
+  { key: 'progress',  label: 'Progress',     emoji: '📊' },
 ];
 
 export default function SelfPage() {
@@ -27,12 +29,13 @@ export default function SelfPage() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [allTodos, setAllTodos] = useState<TodoItem[]>([]);
   const [weeklyGoals, setWeeklyGoals] = useState<Goal[]>([]);
+  const [allWeeklyGoals, setAllWeeklyGoals] = useState<Goal[]>([]);
   const [yearlyGoals, setYearlyGoals] = useState<Goal[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const today = todayISO();
-  const week = getWeekNumber();
-  const year = getYear();
+  const week  = getWeekNumber();
+  const year  = getYear();
 
   const load = useCallback(() => {
     const u = getCurrentUser();
@@ -41,6 +44,7 @@ export default function SelfPage() {
     setTodos(getSelfTodos(u.id, today));
     setAllTodos(getSelfAllTodos(u.id));
     setWeeklyGoals(getSelfGoals(u.id, 'weekly', week, year));
+    setAllWeeklyGoals(getSelfAllGoals(u.id, 'weekly'));
     setYearlyGoals(getSelfGoals(u.id, 'yearly', undefined, year));
     setEvents(getSelfEvents(u.id));
   }, [today, week, year]);
@@ -49,9 +53,9 @@ export default function SelfPage() {
 
   if (!user) return null;
 
-  const todayDone  = todos.filter(t => t.completed).length;
-  const weekDone   = weeklyGoals.filter(g => g.completed).length;
-  const yearDone   = yearlyGoals.filter(g => g.completed).length;
+  const todayDone = todos.filter(t => t.completed).length;
+  const weekDone  = weeklyGoals.filter(g => g.completed).length;
+  const yearDone  = yearlyGoals.filter(g => g.completed).length;
 
   return (
     <div className="space-y-6">
@@ -76,7 +80,7 @@ export default function SelfPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex flex-1 min-w-max items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition ${
+            className={`flex flex-1 min-w-max items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
               tab === t.key ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500 hover:text-stone-700'
             }`}
           >
@@ -111,9 +115,7 @@ export default function SelfPage() {
               <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
             </div>
             <WeeklyBoard
-              goals={weeklyGoals}
-              weekNumber={week}
-              year={year}
+              goals={weeklyGoals} weekNumber={week} year={year}
               onAdd={(text, day) => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'self' }); load(); }}
               onToggle={id => { toggleGoal(id); load(); }}
               onDelete={id => { deleteGoal(id); load(); }}
@@ -136,13 +138,23 @@ export default function SelfPage() {
           </div>
         )}
 
-        {tab === 'calendar' && (
+        {tab === 'reminders' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">My Calendar</h2>
-              <p className="text-sm text-stone-500 mt-1">Personal events with browser notifications</p>
+              <h2 className="text-lg font-semibold text-stone-800">Reminders</h2>
+              <p className="text-sm text-stone-500 mt-1">Set reminders with browser notifications and email alerts</p>
             </div>
-            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} yearlyGoals={yearlyGoals} userId={user.id} scope="self" onRefresh={load} />
+            <Reminders events={events} userId={user.id} scope="self" onRefresh={load} />
+          </div>
+        )}
+
+        {tab === 'progress' && (
+          <div>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-stone-800">Progress</h2>
+              <p className="text-sm text-stone-500 mt-1">Track completed and pending tasks across all time periods</p>
+            </div>
+            <ProgressStats todos={allTodos} weeklyGoals={allWeeklyGoals} yearlyGoals={yearlyGoals} />
           </div>
         )}
       </div>

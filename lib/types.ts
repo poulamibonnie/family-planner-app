@@ -76,5 +76,6 @@ export interface CalendarEvent {
   familyId?: string;
   notifyMinutesBefore: number;
   notified: boolean;
+  reminderEmail?: string;
   createdAt: string;
 }

@@ -178,6 +178,14 @@ export function deleteGoal(id: string): void {
   write(K.GOALS, getGoals().filter(g => g.id !== id));
 }
 
+export function getSelfAllGoals(userId: string, type: 'weekly' | 'yearly'): Goal[] {
+  return getGoals().filter(g => g.scope === 'self' && g.userId === userId && g.type === type);
+}
+
+export function getFamilyAllGoals(familyId: string, type: 'weekly' | 'yearly'): Goal[] {
+  return getGoals().filter(g => g.scope === 'family' && g.familyId === familyId && g.type === type);
+}
+
 export function getSelfGoals(userId: string, type: 'weekly' | 'yearly', week?: number, year?: number): Goal[] {
   return getGoals().filter(g =>
     g.scope === 'self' && g.userId === userId && g.type === type &&

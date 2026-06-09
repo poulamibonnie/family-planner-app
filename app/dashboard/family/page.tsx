@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   getCurrentUser, getFamilyById, getFamilyTodos, getFamilyAllTodos, addTodo, toggleTodo, deleteTodo,
-  getFamilyGoals, addGoal, toggleGoal, deleteGoal, getFamilyShoppingItems,
+  getFamilyGoals, getFamilyAllGoals, addGoal, toggleGoal, deleteGoal, getFamilyShoppingItems,
   addShoppingItem, toggleShoppingItem, deleteShoppingItem, getFamilyEvents, updateUser,
 } from '@/lib/store';
 import type { User, Family, TodoItem, Goal, ShoppingItem, CalendarEvent } from '@/lib/types';
@@ -14,16 +14,18 @@ import GoalList from '@/components/GoalList';
 import WeeklyBoard from '@/components/WeeklyBoard';
 import ShoppingList from '@/components/ShoppingList';
 import MealPlan from '@/components/MealPlan';
-import CalendarEvents from '@/components/CalendarEvents';
+import Reminders from '@/components/Reminders';
+import ProgressStats from '@/components/ProgressStats';
 
-type Tab = 'tasks' | 'goals' | 'shopping' | 'meals' | 'calendar';
+type Tab = 'tasks' | 'goals' | 'shopping' | 'meals' | 'reminders' | 'progress';
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
-  { key: 'tasks',    label: 'Tasks',     emoji: '🗒️' },
-  { key: 'goals',    label: 'Goals',     emoji: '🎯' },
-  { key: 'shopping', label: 'Shopping',  emoji: '🛒' },
-  { key: 'meals',    label: 'Meal Plan', emoji: '🍱' },
-  { key: 'calendar', label: 'Calendar',  emoji: '📅' },
+  { key: 'tasks',     label: 'Tasks',     emoji: '🗒️' },
+  { key: 'goals',     label: 'Goals',     emoji: '🎯' },
+  { key: 'shopping',  label: 'Shopping',  emoji: '🛒' },
+  { key: 'meals',     label: 'Meal Plan', emoji: '🍱' },
+  { key: 'reminders', label: 'Reminders', emoji: '🔔' },
+  { key: 'progress',  label: 'Progress',  emoji: '📊' },
 ];
 
 export default function FamilyPage() {
@@ -31,15 +33,16 @@ export default function FamilyPage() {
   const [user, setUser] = useState<User | null>(null);
   const [family, setFamily] = useState<Family | undefined>(undefined);
   const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [allTodos, setAllTodos] = useState<TodoItem[]>([]);
   const [weeklyGoals, setWeeklyGoals] = useState<Goal[]>([]);
+  const [allWeeklyGoals, setAllWeeklyGoals] = useState<Goal[]>([]);
   const [yearlyGoals, setYearlyGoals] = useState<Goal[]>([]);
   const [shopping, setShopping] = useState<ShoppingItem[]>([]);
-  const [allTodos, setAllTodos] = useState<TodoItem[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   const today = todayISO();
-  const week = getWeekNumber();
-  const year = getYear();
+  const week  = getWeekNumber();
+  const year  = getYear();
 
   const load = useCallback(() => {
     const u = getCurrentUser();
@@ -49,10 +52,11 @@ export default function FamilyPage() {
     setFamily(f);
     if (f) {
       setTodos(getFamilyTodos(f.id, today));
+      setAllTodos(getFamilyAllTodos(f.id));
       setWeeklyGoals(getFamilyGoals(f.id, 'weekly', week, year));
+      setAllWeeklyGoals(getFamilyAllGoals(f.id, 'weekly'));
       setYearlyGoals(getFamilyGoals(f.id, 'yearly', undefined, year));
       setShopping(getFamilyShoppingItems(f.id));
-      setAllTodos(getFamilyAllTodos(f.id));
       setEvents(getFamilyEvents(f.id));
     }
   }, [today, week, year]);
@@ -145,9 +149,7 @@ export default function FamilyPage() {
                 <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
               </div>
               <WeeklyBoard
-                goals={weeklyGoals}
-                weekNumber={week}
-                year={year}
+                goals={weeklyGoals} weekNumber={week} year={year}
                 onAdd={(text, day) => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
                 onToggle={id => { toggleGoal(id); load(); }}
                 onDelete={id => { deleteGoal(id); load(); }}
@@ -193,18 +195,28 @@ export default function FamilyPage() {
           </div>
         )}
 
-        {tab === 'calendar' && (
+        {tab === 'reminders' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">Family Calendar</h2>
-              <p className="text-sm text-stone-500 mt-1">Shared events with browser notifications</p>
+              <h2 className="text-lg font-semibold text-stone-800">Reminders</h2>
+              <p className="text-sm text-stone-500 mt-1">Set shared reminders with browser notifications and email alerts</p>
             </div>
-            <CalendarEvents events={events} todos={allTodos} goals={weeklyGoals} yearlyGoals={yearlyGoals} userId={user.id} familyId={family.id} scope="family" onRefresh={load} />
+            <Reminders events={events} userId={user.id} familyId={family.id} scope="family" onRefresh={load} />
+          </div>
+        )}
+
+        {tab === 'progress' && (
+          <div>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-stone-800">Progress</h2>
+              <p className="text-sm text-stone-500 mt-1">Track family completed and pending tasks across all time periods</p>
+            </div>
+            <ProgressStats todos={allTodos} weeklyGoals={allWeeklyGoals} yearlyGoals={yearlyGoals} />
           </div>
         )}
       </div>
 
-      {/* Family settings collapsible */}
+      {/* Family settings */}
       <details className="rounded-2xl border border-stone-100 bg-white shadow-sm">
         <summary className="cursor-pointer px-6 py-4 text-sm font-medium text-stone-700 hover:text-stone-900 list-none flex items-center gap-2">
           <span>⚙️</span> Family Settings
