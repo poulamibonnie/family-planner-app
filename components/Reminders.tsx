@@ -121,7 +121,7 @@ export default function Reminders({ events, userId, familyId, scope, onRefresh }
         <button
           onClick={() => setShowForm(s => !s)}
           className="flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}
+          style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16">
             <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -195,7 +195,7 @@ export default function Reminders({ events, userId, familyId, scope, onRefresh }
             </button>
             <button type="submit"
               className="rounded-xl px-4 py-2 text-sm font-medium text-white transition active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}>
+              style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}>
               Save{reminderEmail.trim() ? ' & Send Email' : ''}
             </button>
           </div>

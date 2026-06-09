@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf8f5;
-  --foreground: #1c1917;
+  --background: #ede8df;
+  --foreground: #3d4a38;
 }
 
 @theme inline {
@@ -10,6 +10,58 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Red → Forest green (#606C5A) */
+  --color-red-50:  #f1f3ef;
+  --color-red-100: #dce0d9;
+  --color-red-200: #c2cebe;
+  --color-red-300: #a5b5a0;
+  --color-red-400: #7d9178;
+  --color-red-500: #6b7d64;
+  --color-red-600: #606C5A;
+  --color-red-700: #4a5545;
+  --color-red-800: #3d4a38;
+  --color-red-900: #2d3829;
+
+  /* Rose → Warm tan (#C19E85) */
+  --color-rose-50:  #faf3ee;
+  --color-rose-100: #f0e2d2;
+  --color-rose-200: #ddc4aa;
+  --color-rose-300: #caa98a;
+  --color-rose-400: #c5a07f;
+  --color-rose-500: #C19E85;
+  --color-rose-600: #a8835f;
+  --color-rose-700: #8a6647;
+  --color-rose-800: #6d4f36;
+  --color-rose-900: #503a28;
+
+  /* Amber → Sage (#B9B99D) */
+  --color-amber-50:  #f5f5ee;
+  --color-amber-100: #e9e9d8;
+  --color-amber-200: #d5d5be;
+  --color-amber-300: #c6c6aa;
+  --color-amber-400: #B9B99D;
+  --color-amber-500: #a8a886;
+  --color-amber-600: #8F837A;
+  --color-amber-700: #6e6d58;
+  --color-amber-800: #565644;
+  --color-amber-900: #404035;
+
+  /* Emerald → Sage-light (#B0B9A7) */
+  --color-emerald-50:  #eef1ec;
+  --color-emerald-100: #dde3da;
+  --color-emerald-200: #B0B9A7;
+  --color-emerald-300: #95a68c;
+  --color-emerald-400: #7a9171;
+  --color-emerald-500: #647d5b;
+  --color-emerald-600: #4d6645;
+  --color-emerald-700: #3d5237;
+  --color-emerald-800: #2e3f2a;
+  --color-emerald-900: #1f2d1c;
+
+  /* Stone: warm up slightly */
+  --color-stone-50:  #f5efe6;
+  --color-stone-100: #ece4d8;
 }
 
 body {

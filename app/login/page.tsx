@@ -31,7 +31,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg text-3xl"
-            style={{ background: 'linear-gradient(135deg, #7f1d1d, #1c1917)' }}>
+            style={{ background: 'linear-gradient(135deg, #4a5545, #2d3829)' }}>
             🌸
           </div>
           <h1 className="text-2xl font-bold text-stone-900">FamilyPlanner</h1>
@@ -67,7 +67,7 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className="w-full rounded-xl py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}
+            style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>

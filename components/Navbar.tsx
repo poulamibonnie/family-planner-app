@@ -50,7 +50,7 @@ export default function Navbar({ user }: Props) {
   }
 
   return (
-    <header className="sticky top-0 z-30 shadow-lg" style={{ background: 'linear-gradient(135deg, #1c1917 0%, #7f1d1d 60%, #991b1b 100%)' }}>
+    <header className="sticky top-0 z-30 shadow-lg" style={{ background: 'linear-gradient(135deg, #2d3829 0%, #4a5545 60%, #606C5A 100%)' }}>
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
 
         {/* Logo */}
@@ -151,7 +151,7 @@ export default function Navbar({ user }: Props) {
                       <button
                         type="submit"
                         className="flex-1 rounded-xl py-2 text-xs font-medium text-white transition active:scale-95"
-                        style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}
+                        style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}
                       >
                         Save
                       </button>

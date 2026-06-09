@@ -151,7 +151,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
               <button
                 onClick={sendInvites}
                 className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 active:scale-95"
-                style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}
+                style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24">
                   <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -177,7 +177,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
             {members.map(m => (
               <li key={m.id} className="flex items-center gap-3">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                  style={{ background: 'linear-gradient(135deg, #7f1d1d, #1c1917)' }}>
+                  style={{ background: 'linear-gradient(135deg, #4a5545, #2d3829)' }}>
                   {m.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -201,7 +201,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
     <div className="space-y-6">
       <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl text-4xl"
-          style={{ background: 'linear-gradient(135deg, #7f1d1d, #1c1917)' }}>
+          style={{ background: 'linear-gradient(135deg, #4a5545, #2d3829)' }}>
           🏮
         </div>
         <h2 className="text-lg font-bold text-stone-800">Join or Create a Family</h2>
@@ -211,7 +211,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <button onClick={() => setMode('create')}
               className="rounded-xl px-6 py-2.5 text-sm font-medium text-white shadow-sm transition active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}>
+              style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}>
               Create a Family
             </button>
             <button onClick={() => setMode('join')}
@@ -231,7 +231,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
           />
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => setMode('idle')} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm text-stone-600 hover:bg-stone-50 transition">Cancel</button>
-            <button type="submit" className="rounded-xl px-4 py-2 text-sm font-medium text-white transition active:scale-95" style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}>Create</button>
+            <button type="submit" className="rounded-xl px-4 py-2 text-sm font-medium text-white transition active:scale-95" style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}>Create</button>
           </div>
         </form>
       )}
@@ -247,7 +247,7 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
           {error && <p className="text-xs text-red-600">{error}</p>}
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={() => { setMode('idle'); setError(''); }} className="rounded-xl border border-stone-200 bg-white px-4 py-2 text-sm text-stone-600 hover:bg-stone-50 transition">Cancel</button>
-            <button type="submit" className="rounded-xl px-4 py-2 text-sm font-medium text-white transition active:scale-95" style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}>Join</button>
+            <button type="submit" className="rounded-xl px-4 py-2 text-sm font-medium text-white transition active:scale-95" style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}>Join</button>
           </div>
         </form>
       )}

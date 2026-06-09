@@ -9,10 +9,10 @@ const COLORS: Record<DayOfWeek, { bg: string; border: string; title: string; bad
   Mon: { bg: 'bg-red-50',     border: 'border-red-200',     title: 'text-red-800',     badge: 'bg-red-100 text-red-700',     ring: 'ring-red-400',     check: 'accent-red-600' },
   Tue: { bg: 'bg-amber-50',   border: 'border-amber-200',   title: 'text-amber-800',   badge: 'bg-amber-100 text-amber-700',   ring: 'ring-amber-400',   check: 'accent-amber-600' },
   Wed: { bg: 'bg-emerald-50', border: 'border-emerald-200', title: 'text-emerald-800', badge: 'bg-emerald-100 text-emerald-700', ring: 'ring-emerald-400', check: 'accent-emerald-600' },
-  Thu: { bg: 'bg-sky-50',     border: 'border-sky-200',     title: 'text-sky-800',     badge: 'bg-sky-100 text-sky-700',     ring: 'ring-sky-400',     check: 'accent-sky-600' },
-  Fri: { bg: 'bg-violet-50',  border: 'border-violet-200',  title: 'text-violet-800',  badge: 'bg-violet-100 text-violet-700',  ring: 'ring-violet-400',  check: 'accent-violet-600' },
-  Sat: { bg: 'bg-pink-50',    border: 'border-pink-200',    title: 'text-pink-800',    badge: 'bg-pink-100 text-pink-700',    ring: 'ring-pink-400',    check: 'accent-pink-600' },
-  Sun: { bg: 'bg-orange-50',  border: 'border-orange-200',  title: 'text-orange-800',  badge: 'bg-orange-100 text-orange-700',  ring: 'ring-orange-400',  check: 'accent-orange-600' },
+  Thu: { bg: 'bg-stone-50',   border: 'border-stone-200',   title: 'text-stone-700',   badge: 'bg-stone-100 text-stone-600',   ring: 'ring-stone-400',   check: 'accent-stone-600' },
+  Fri: { bg: 'bg-zinc-50',    border: 'border-zinc-200',    title: 'text-zinc-800',    badge: 'bg-zinc-100 text-zinc-700',    ring: 'ring-zinc-400',    check: 'accent-zinc-600' },
+  Sat: { bg: 'bg-rose-50',    border: 'border-rose-200',    title: 'text-rose-800',    badge: 'bg-rose-100 text-rose-700',    ring: 'ring-rose-400',    check: 'accent-rose-600' },
+  Sun: { bg: 'bg-slate-50',   border: 'border-slate-200',   title: 'text-slate-700',   badge: 'bg-slate-100 text-slate-600',   ring: 'ring-slate-400',   check: 'accent-slate-600' },
 };
 
 interface Props {

@@ -83,7 +83,7 @@ export default function ProgressStats({ todos, weeklyGoals, yearlyGoals }: Props
   const grandDone   = doneTasks + doneGoals;
   const grandPending = grand - grandDone;
   const pct         = grand === 0 ? 0 : Math.round((grandDone / grand) * 100);
-  const progressColor = pct >= 75 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
+  const progressColor = pct >= 75 ? '#606C5A' : pct >= 40 ? '#C19E85' : '#8F837A';
 
   const taskPct  = totalTasks === 0 ? 0 : Math.round((doneTasks  / totalTasks)  * 100);
   const goalPct  = totalGoals === 0 ? 0 : Math.round((doneGoals  / totalGoals)  * 100);

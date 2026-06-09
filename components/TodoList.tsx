@@ -35,7 +35,7 @@ export default function TodoList({ items, onAdd, onToggle, onDelete, placeholder
         <button
           type="submit"
           className="rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #991b1b, #7f1d1d)' }}
+          style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}
         >
           Add
         </button>
