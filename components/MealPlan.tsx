@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getFamilyMeals, setMeal } from '@/lib/store';
+import { getFamilyMeals, setMeal as saveMeal } from '@/lib/actions/meals';
 import type { MealEntry, DayOfWeek, MealType } from '@/lib/types';
 import { getWeekNumber, getYear } from '@/lib/utils';
 
@@ -23,7 +23,7 @@ export default function MealPlan({ familyId }: Props) {
   const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
-    setMeals(getFamilyMeals(familyId, week, year));
+    getFamilyMeals(familyId, week, year).then(setMeals);
   }, [familyId, week, year]);
 
   function getMeal(day: DayOfWeek, type: MealType): string {
@@ -35,10 +35,10 @@ export default function MealPlan({ familyId }: Props) {
     setEditValue(getMeal(day, type));
   }
 
-  function commitEdit() {
+  async function commitEdit() {
     if (!editing) return;
-    setMeal(familyId, editing.day, editing.type, editValue, week, year);
-    setMeals(getFamilyMeals(familyId, week, year));
+    await saveMeal(familyId, editing.day, editing.type, editValue, week, year);
+    getFamilyMeals(familyId, week, year).then(setMeals);
     setEditing(null);
     setEditValue('');
   }

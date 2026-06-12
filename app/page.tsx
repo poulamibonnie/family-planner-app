@@ -2,13 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession } from '@/lib/store';
+import { getCurrentUser } from '@/lib/actions/auth';
 
 export default function Root() {
   const router = useRouter();
   useEffect(() => {
-    const id = getSession();
-    router.replace(id ? '/dashboard/self' : '/login');
+    getCurrentUser().then(user => {
+      router.replace(user ? '/dashboard/self' : '/login');
+    });
   }, [router]);
 
   return (

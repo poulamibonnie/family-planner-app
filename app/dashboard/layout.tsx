@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/store';
+import { getCurrentUser } from '@/lib/actions/auth';
 import type { User } from '@/lib/types';
 import Navbar from '@/components/Navbar';
 
@@ -12,10 +12,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const u = getCurrentUser();
-    if (!u) { router.replace('/login'); return; }
-    setUser(u);
-    setReady(true);
+    getCurrentUser().then(u => {
+      if (!u) { router.replace('/login'); return; }
+      setUser(u);
+      setReady(true);
+    });
   }, [router]);
 
   if (!ready || !user) {

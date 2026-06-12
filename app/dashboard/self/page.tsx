@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  getCurrentUser, getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo,
-  getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal, getSelfEvents,
-} from '@/lib/store';
+import { getCurrentUser } from '@/lib/actions/auth';
+import { getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
+import { getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal } from '@/lib/actions/goals';
+import { getSelfEvents } from '@/lib/actions/events';
 import type { User, TodoItem, Goal, CalendarEvent } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate } from '@/lib/utils';
 import TodoList from '@/components/TodoList';
@@ -37,16 +37,24 @@ export default function SelfPage() {
   const week  = getWeekNumber();
   const year  = getYear();
 
-  const load = useCallback(() => {
-    const u = getCurrentUser();
+  const load = useCallback(async () => {
+    const u = await getCurrentUser();
     if (!u) return;
     setUser(u);
-    setTodos(getSelfTodos(u.id, today));
-    setAllTodos(getSelfAllTodos(u.id));
-    setWeeklyGoals(getSelfGoals(u.id, 'weekly', week, year));
-    setAllWeeklyGoals(getSelfAllGoals(u.id, 'weekly'));
-    setYearlyGoals(getSelfGoals(u.id, 'yearly', undefined, year));
-    setEvents(getSelfEvents(u.id));
+    const [todayTodos, allTodosData, weekly, allWeekly, yearly, eventsData] = await Promise.all([
+      getSelfTodos(u.id, today),
+      getSelfAllTodos(u.id),
+      getSelfGoals(u.id, 'weekly', week, year),
+      getSelfAllGoals(u.id, 'weekly'),
+      getSelfGoals(u.id, 'yearly', undefined, year),
+      getSelfEvents(u.id),
+    ]);
+    setTodos(todayTodos);
+    setAllTodos(allTodosData);
+    setWeeklyGoals(weekly);
+    setAllWeeklyGoals(allWeekly);
+    setYearlyGoals(yearly);
+    setEvents(eventsData);
   }, [today, week, year]);
 
   useEffect(() => { load(); }, [load]);
@@ -100,9 +108,9 @@ export default function SelfPage() {
             </div>
             <TodoList
               items={todos}
-              onAdd={text => { addTodo({ text, completed: false, date: today, userId: user.id, scope: 'self' }); load(); }}
-              onToggle={id => { toggleTodo(id); load(); }}
-              onDelete={id => { deleteTodo(id); load(); }}
+              onAdd={async text => { await addTodo({ text, completed: false, date: today, userId: user.id, scope: 'self' }); load(); }}
+              onToggle={async id => { await toggleTodo(id); load(); }}
+              onDelete={async id => { await deleteTodo(id); load(); }}
               placeholder="Add a task for today…"
             />
           </div>
@@ -116,9 +124,9 @@ export default function SelfPage() {
             </div>
             <WeeklyBoard
               goals={weeklyGoals} weekNumber={week} year={year}
-              onAdd={(text, day) => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'self' }); load(); }}
-              onToggle={id => { toggleGoal(id); load(); }}
-              onDelete={id => { deleteGoal(id); load(); }}
+              onAdd={async (text, day) => { await addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'self' }); load(); }}
+              onToggle={async id => { await toggleGoal(id); load(); }}
+              onDelete={async id => { await deleteGoal(id); load(); }}
             />
           </div>
         )}
@@ -131,9 +139,9 @@ export default function SelfPage() {
             </div>
             <GoalList
               items={yearlyGoals} title={`Goals for ${year}`} accentColor="amber"
-              onAdd={text => { addGoal({ text, completed: false, type: 'yearly', year, userId: user.id, scope: 'self' }); load(); }}
-              onToggle={id => { toggleGoal(id); load(); }}
-              onDelete={id => { deleteGoal(id); load(); }}
+              onAdd={async text => { await addGoal({ text, completed: false, type: 'yearly', year, userId: user.id, scope: 'self' }); load(); }}
+              onToggle={async id => { await toggleGoal(id); load(); }}
+              onDelete={async id => { await deleteGoal(id); load(); }}
             />
           </div>
         )}

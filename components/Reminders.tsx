@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { CalendarEvent } from '@/lib/types';
-import { addCalendarEvent, deleteCalendarEvent, markEventNotified } from '@/lib/store';
+import { addCalendarEvent, deleteCalendarEvent, markEventNotified } from '@/lib/actions/events';
 
 interface Props {
   events: CalendarEvent[];
@@ -38,8 +38,7 @@ export default function Reminders({ events, userId, familyId, scope, onRefresh }
           body: `${ev.time ? `at ${ev.time} — ` : ''}${ev.description || 'Upcoming reminder'}`,
           icon: '/favicon.ico',
         });
-        markEventNotified(ev.id);
-        onRefresh();
+        markEventNotified(ev.id).then(() => onRefresh());
       }
     });
   }, [events, onRefresh]);
@@ -68,16 +67,15 @@ export default function Reminders({ events, userId, familyId, scope, onRefresh }
     return `mailto:${email}?subject=${subject}&body=${body}`;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !date) return;
     const email = reminderEmail.trim();
-    addCalendarEvent({
+    await addCalendarEvent({
       title: title.trim(), date, time, description, scope, userId, familyId,
       notifyMinutesBefore: parseInt(notifyBefore) || 15,
       reminderEmail: email || undefined,
     });
-    // If email provided, open mailto immediately ("send when set")
     if (email) {
       const subject = encodeURIComponent(`Reminder: ${title.trim()}`);
       const dateStr = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -207,7 +205,7 @@ export default function Reminders({ events, userId, familyId, scope, onRefresh }
           <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Upcoming</h3>
           {upcoming.map(ev => (
             <ReminderCard key={ev.id} event={ev} formatDate={formatDate} mailto={buildMailto(ev)}
-              onDelete={() => { deleteCalendarEvent(ev.id); onRefresh(); }} />
+              onDelete={() => deleteCalendarEvent(ev.id).then(() => onRefresh())} />
           ))}
         </div>
       )}
@@ -217,7 +215,7 @@ export default function Reminders({ events, userId, familyId, scope, onRefresh }
           <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Past</h3>
           {past.map(ev => (
             <ReminderCard key={ev.id} event={ev} formatDate={formatDate} mailto={buildMailto(ev)} past
-              onDelete={() => { deleteCalendarEvent(ev.id); onRefresh(); }} />
+              onDelete={() => deleteCalendarEvent(ev.id).then(() => onRefresh())} />
           ))}
         </div>
       )}
@@ -238,7 +236,6 @@ function ReminderCard({ event, formatDate, mailto, past, onDelete }: {
   return (
     <div className={`group rounded-2xl border px-4 py-3 shadow-sm transition ${past ? 'border-stone-100 bg-white opacity-60' : 'border-red-100 bg-white'}`}>
       <div className="flex items-start gap-4">
-        {/* Date block */}
         <div className={`shrink-0 rounded-xl px-2.5 py-1.5 text-center min-w-[52px] ${past ? 'bg-stone-100' : 'bg-red-50'}`}>
           <p className={`text-xs font-bold uppercase ${past ? 'text-stone-500' : 'text-red-700'}`}>
             {new Date(event.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' })}
@@ -248,7 +245,6 @@ function ReminderCard({ event, formatDate, mailto, past, onDelete }: {
           </p>
         </div>
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-stone-800">{event.title}</p>
           <p className="text-xs text-stone-500 mt-0.5">{formatDate(event.date)}{event.time ? ` · ${event.time}` : ''}</p>
@@ -268,7 +264,6 @@ function ReminderCard({ event, formatDate, mailto, past, onDelete }: {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex shrink-0 flex-col gap-1.5 items-end">
           {event.reminderEmail && (
             <a href={mailto} target="_blank" rel="noreferrer"

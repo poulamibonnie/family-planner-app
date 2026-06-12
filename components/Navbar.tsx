@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { User } from '@/lib/types';
-import { setSession, updateUser } from '@/lib/store';
+import { logout as logoutAction } from '@/lib/actions/auth';
+import { updateUser } from '@/lib/actions/family';
 
 interface Props {
   user: User;
@@ -34,16 +35,16 @@ export default function Navbar({ user }: Props) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [displayName]);
 
-  function logout() {
-    setSession(null);
+  async function handleLogout() {
+    await logoutAction();
     router.push('/login');
   }
 
-  function saveName(e: React.FormEvent) {
+  async function saveName(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = nameInput.trim();
     if (!trimmed) return;
-    updateUser(user.id, { name: trimmed });
+    await updateUser(user.id, { name: trimmed });
     setDisplayName(trimmed);
     setEditing(false);
     setShowMenu(false);
@@ -108,7 +109,7 @@ export default function Navbar({ user }: Props) {
           </button>
 
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
           >
             Logout

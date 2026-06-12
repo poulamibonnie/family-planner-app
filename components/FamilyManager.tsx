@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { User, Family } from '@/lib/types';
-import { createFamily, joinFamily, updateUser, leaveFamily, getFamilyMembers } from '@/lib/store';
+import { createFamily, joinFamily, updateUser, leaveFamily, getFamilyMembers } from '@/lib/actions/family';
 
 interface Props {
   user: User;
@@ -19,30 +19,35 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteEmails, setInviteEmails] = useState<string[]>([]);
   const [emailSent, setEmailSent] = useState(false);
+  const [members, setMembers] = useState<User[]>([]);
 
-  function handleCreate(e: React.FormEvent) {
+  useEffect(() => {
+    if (family) getFamilyMembers(family.id).then(setMembers);
+  }, [family?.id]);
+
+  async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!familyName.trim()) return;
-    const newFamily = createFamily(familyName.trim(), user.id);
-    updateUser(user.id, { familyId: newFamily.id });
+    const newFamily = await createFamily(familyName.trim(), user.id);
+    await updateUser(user.id, { familyId: newFamily.id });
     setMode('idle'); setFamilyName('');
     onFamilyChange();
   }
 
-  function handleJoin(e: React.FormEvent) {
+  async function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const found = joinFamily(joinCode.trim(), user.id);
+    const found = await joinFamily(joinCode.trim(), user.id);
     if (!found) { setError('Invalid code. Check the code and try again.'); return; }
-    updateUser(user.id, { familyId: found.id });
+    await updateUser(user.id, { familyId: found.id });
     setMode('idle'); setJoinCode('');
     onFamilyChange();
   }
 
-  function handleLeave() {
+  async function handleLeave() {
     if (!family) return;
-    leaveFamily(family.id, user.id);
-    updateUser(user.id, { familyId: undefined });
+    await leaveFamily(family.id, user.id);
+    await updateUser(user.id, { familyId: null });
     onFamilyChange();
   }
 
@@ -84,7 +89,6 @@ export default function FamilyManager({ user, family, onFamilyChange }: Props) {
   }
 
   if (family) {
-    const members = getFamilyMembers(family.id);
     return (
       <div className="space-y-4">
         {/* Family code card */}

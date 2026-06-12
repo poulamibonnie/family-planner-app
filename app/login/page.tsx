@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getUserByEmail, setSession } from '@/lib/store';
+import { login } from '@/lib/actions/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,17 +12,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const user = getUserByEmail(email);
-    if (!user || user.password !== password) {
-      setError('Invalid email or password.');
+    const result = await login(email, password);
+    if ('error' in result) {
+      setError(result.error);
       setLoading(false);
       return;
     }
-    setSession(user.id);
     router.push('/dashboard/self');
   }
 

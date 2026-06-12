@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getUserByEmail, createUser, setSession } from '@/lib/store';
+import { register } from '@/lib/actions/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -11,14 +11,19 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
-    if (getUserByEmail(email)) { setError('An account with this email already exists.'); return; }
-    const user = createUser(name.trim(), email, password);
-    setSession(user.id);
+    setLoading(true);
+    const result = await register(name.trim(), email, password);
+    if ('error' in result) {
+      setError(result.error);
+      setLoading(false);
+      return;
+    }
     router.push('/dashboard/self');
   }
 
@@ -70,10 +75,11 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full rounded-xl py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98]"
+            disabled={loading}
+            className="w-full rounded-xl py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}
           >
-            Create Account
+            {loading ? 'Creating account…' : 'Create Account'}
           </button>
         </form>
 

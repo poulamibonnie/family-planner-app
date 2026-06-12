@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  getCurrentUser, getFamilyById, getFamilyTodos, getFamilyAllTodos, addTodo, toggleTodo, deleteTodo,
-  getFamilyGoals, getFamilyAllGoals, addGoal, toggleGoal, deleteGoal, getFamilyShoppingItems,
-  addShoppingItem, toggleShoppingItem, deleteShoppingItem, getFamilyEvents, updateUser,
-} from '@/lib/store';
+import { getCurrentUser } from '@/lib/actions/auth';
+import { getFamilyById } from '@/lib/actions/family';
+import { getFamilyTodos, getFamilyAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
+import { getFamilyGoals, getFamilyAllGoals, addGoal, toggleGoal, deleteGoal } from '@/lib/actions/goals';
+import { getFamilyShoppingItems, addShoppingItem, toggleShoppingItem, deleteShoppingItem } from '@/lib/actions/shopping';
+import { getFamilyEvents } from '@/lib/actions/events';
 import type { User, Family, TodoItem, Goal, ShoppingItem, CalendarEvent } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear } from '@/lib/utils';
 import FamilyManager from '@/components/FamilyManager';
@@ -44,20 +45,29 @@ export default function FamilyPage() {
   const week  = getWeekNumber();
   const year  = getYear();
 
-  const load = useCallback(() => {
-    const u = getCurrentUser();
+  const load = useCallback(async () => {
+    const u = await getCurrentUser();
     if (!u) return;
     setUser(u);
-    const f = u.familyId ? getFamilyById(u.familyId) : undefined;
-    setFamily(f);
+    const f = u.familyId ? await getFamilyById(u.familyId) : null;
+    setFamily(f ?? undefined);
     if (f) {
-      setTodos(getFamilyTodos(f.id, today));
-      setAllTodos(getFamilyAllTodos(f.id));
-      setWeeklyGoals(getFamilyGoals(f.id, 'weekly', week, year));
-      setAllWeeklyGoals(getFamilyAllGoals(f.id, 'weekly'));
-      setYearlyGoals(getFamilyGoals(f.id, 'yearly', undefined, year));
-      setShopping(getFamilyShoppingItems(f.id));
-      setEvents(getFamilyEvents(f.id));
+      const [todayTodos, allTodosData, weekly, allWeekly, yearly, shopItems, eventsData] = await Promise.all([
+        getFamilyTodos(f.id, today),
+        getFamilyAllTodos(f.id),
+        getFamilyGoals(f.id, 'weekly', week, year),
+        getFamilyAllGoals(f.id, 'weekly'),
+        getFamilyGoals(f.id, 'yearly', undefined, year),
+        getFamilyShoppingItems(f.id),
+        getFamilyEvents(f.id),
+      ]);
+      setTodos(todayTodos);
+      setAllTodos(allTodosData);
+      setWeeklyGoals(weekly);
+      setAllWeeklyGoals(allWeekly);
+      setYearlyGoals(yearly);
+      setShopping(shopItems);
+      setEvents(eventsData);
     }
   }, [today, week, year]);
 
@@ -133,9 +143,9 @@ export default function FamilyPage() {
             </div>
             <TodoList
               items={todos}
-              onAdd={text => { addTodo({ text, completed: false, date: today, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
-              onToggle={id => { toggleTodo(id); load(); }}
-              onDelete={id => { deleteTodo(id); load(); }}
+              onAdd={async text => { await addTodo({ text, completed: false, date: today, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
+              onToggle={async id => { await toggleTodo(id); load(); }}
+              onDelete={async id => { await deleteTodo(id); load(); }}
               placeholder="Add a shared task for today…"
             />
           </div>
@@ -150,9 +160,9 @@ export default function FamilyPage() {
               </div>
               <WeeklyBoard
                 goals={weeklyGoals} weekNumber={week} year={year}
-                onAdd={(text, day) => { addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
-                onToggle={id => { toggleGoal(id); load(); }}
-                onDelete={id => { deleteGoal(id); load(); }}
+                onAdd={async (text, day) => { await addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
+                onToggle={async id => { await toggleGoal(id); load(); }}
+                onDelete={async id => { await deleteGoal(id); load(); }}
               />
             </div>
             <div className="border-t border-stone-100 pt-8">
@@ -162,9 +172,9 @@ export default function FamilyPage() {
               </div>
               <GoalList
                 items={yearlyGoals} title={`Family goals for ${year}`} accentColor="amber"
-                onAdd={text => { addGoal({ text, completed: false, type: 'yearly', year, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
-                onToggle={id => { toggleGoal(id); load(); }}
-                onDelete={id => { deleteGoal(id); load(); }}
+                onAdd={async text => { await addGoal({ text, completed: false, type: 'yearly', year, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
+                onToggle={async id => { await toggleGoal(id); load(); }}
+                onDelete={async id => { await deleteGoal(id); load(); }}
               />
             </div>
           </div>
@@ -178,9 +188,9 @@ export default function FamilyPage() {
             </div>
             <ShoppingList
               items={shopping}
-              onAdd={(text, qty) => { addShoppingItem({ text, quantity: qty, completed: false, addedBy: user.id, addedByName: user.name, familyId: family.id }); load(); }}
-              onToggle={id => { toggleShoppingItem(id); load(); }}
-              onDelete={id => { deleteShoppingItem(id); load(); }}
+              onAdd={async (text, qty) => { await addShoppingItem({ text, quantity: qty, completed: false, addedBy: user.id, addedByName: user.name, familyId: family.id }); load(); }}
+              onToggle={async id => { await toggleShoppingItem(id); load(); }}
+              onDelete={async id => { await deleteShoppingItem(id); load(); }}
             />
           </div>
         )}

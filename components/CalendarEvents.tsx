@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { CalendarEvent, TodoItem, Goal } from '@/lib/types';
-import { addCalendarEvent, deleteCalendarEvent, markEventNotified, toggleTodo, toggleGoal } from '@/lib/store';
+import { addCalendarEvent, deleteCalendarEvent, markEventNotified } from '@/lib/actions/events';
+import { toggleTodo } from '@/lib/actions/todos';
+import { toggleGoal } from '@/lib/actions/goals';
 import { goalDayToISO, getWeekNumber, getYear } from '@/lib/utils';
 
 interface Props {
@@ -51,8 +53,7 @@ export default function CalendarEvents({
           body: `${ev.time ? `at ${ev.time} — ` : ''}${ev.description || 'Upcoming event'}`,
           icon: '/favicon.ico',
         });
-        markEventNotified(ev.id);
-        onRefresh();
+        markEventNotified(ev.id).then(() => onRefresh());
       }
     });
   }, [events, onRefresh]);
@@ -68,10 +69,10 @@ export default function CalendarEvents({
     setNotifPermission(result);
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !date) return;
-    addCalendarEvent({
+    await addCalendarEvent({
       title: title.trim(), date, time, description, scope, userId, familyId,
       notifyMinutesBefore: parseInt(notifyBefore) || 15,
     });
@@ -80,7 +81,6 @@ export default function CalendarEvents({
     onRefresh();
   }
 
-  // Build unified agenda
   const today = new Date().toISOString().split('T')[0];
   const agendaItems: AgendaItem[] = [
     ...events.map(ev => ({ kind: 'event' as const, date: ev.date, data: ev })),
@@ -117,7 +117,6 @@ export default function CalendarEvents({
 
   return (
     <div className="space-y-6">
-      {/* ── Stats Panel ── */}
       <StatsPanel todos={todos} weeklyGoals={goals} yearlyGoals={yearlyGoals} today={today} />
 
       {notifPermission !== 'granted' && (
@@ -187,7 +186,6 @@ export default function CalendarEvents({
         </form>
       )}
 
-      {/* Legend */}
       {agendaItems.length > 0 && (
         <div className="flex flex-wrap gap-3 text-xs text-stone-500">
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-500 inline-block" />Event</span>
@@ -250,7 +248,6 @@ function StatsPanel({ todos, weeklyGoals, yearlyGoals, today }: {
     return new Date(dateStr + 'T12:00:00').getFullYear() === currentYear;
   }
 
-  // Map weekly goals to ISO dates for month/day filtering
   const weeklyWithDate = weeklyGoals
     .filter(g => g.day && g.weekNumber !== undefined)
     .map(g => ({ goal: g, iso: goalDayToISO(g.weekNumber!, g.year, g.day!) }));
@@ -299,7 +296,6 @@ function StatsPanel({ todos, weeklyGoals, yearlyGoals, today }: {
 
   return (
     <div className="rounded-2xl border border-stone-100 bg-white shadow-sm overflow-hidden">
-      {/* Period tabs */}
       <div className="flex border-b border-stone-100">
         {periods.map(p => (
           <button
@@ -318,13 +314,11 @@ function StatsPanel({ todos, weeklyGoals, yearlyGoals, today }: {
         ))}
       </div>
 
-      {/* Stats body */}
       <div className="p-5">
         {grandTotal === 0 ? (
           <p className="text-center text-sm text-stone-400 py-4">No tasks or goals for this period</p>
         ) : (
           <div className="flex flex-col sm:flex-row gap-5 items-center">
-            {/* Circle progress */}
             <div className="relative flex-shrink-0 flex items-center justify-center">
               <svg width="96" height="96" viewBox="0 0 96 96">
                 <circle cx="48" cy="48" r="40" fill="none" stroke="#f3f4f6" strokeWidth="10" />
@@ -344,36 +338,27 @@ function StatsPanel({ todos, weeklyGoals, yearlyGoals, today }: {
               </div>
             </div>
 
-            {/* Breakdown */}
             <div className="flex-1 w-full space-y-3">
-              {/* Overall */}
               <div>
                 <div className="flex justify-between text-xs text-stone-500 mb-1">
                   <span className="font-semibold text-stone-700">Overall</span>
                   <span>{grandDone} done · <span className="text-red-600">{grandPending} pending</span></span>
                 </div>
                 <div className="h-2 rounded-full bg-stone-100">
-                  <div
-                    className="h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%`, background: progressColor }}
-                  />
+                  <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: progressColor }} />
                 </div>
               </div>
 
-              {/* Tasks row */}
               {totalTasks > 0 && (
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="flex items-center gap-1.5 text-stone-500">
-                      <span className="h-2 w-2 rounded-full bg-blue-400 inline-block" />
-                      Daily Tasks
+                      <span className="h-2 w-2 rounded-full bg-blue-400 inline-block" />Daily Tasks
                     </span>
                     <span className="text-stone-600">
                       <span className="font-semibold text-emerald-600">{doneTasks} done</span>
-                      {' · '}
-                      <span className="font-semibold text-red-500">{pendingTasks} pending</span>
-                      {' · '}
-                      {totalTasks} total
+                      {' · '}<span className="font-semibold text-red-500">{pendingTasks} pending</span>
+                      {' · '}{totalTasks} total
                     </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-stone-100">
@@ -382,20 +367,16 @@ function StatsPanel({ todos, weeklyGoals, yearlyGoals, today }: {
                 </div>
               )}
 
-              {/* Goals row */}
               {totalGoals > 0 && (
                 <div>
                   <div className="flex justify-between text-xs mb-1">
                     <span className="flex items-center gap-1.5 text-stone-500">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
-                      Goals
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />Goals
                     </span>
                     <span className="text-stone-600">
                       <span className="font-semibold text-emerald-600">{doneGoals} done</span>
-                      {' · '}
-                      <span className="font-semibold text-red-500">{pendingGoals} pending</span>
-                      {' · '}
-                      {totalGoals} total
+                      {' · '}<span className="font-semibold text-red-500">{pendingGoals} pending</span>
+                      {' · '}{totalGoals} total
                     </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-stone-100">
@@ -404,17 +385,10 @@ function StatsPanel({ todos, weeklyGoals, yearlyGoals, today }: {
                 </div>
               )}
 
-              {/* Pill summary */}
               <div className="flex gap-2 pt-1 flex-wrap">
-                <span className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                  {grandDone} completed
-                </span>
-                <span className="rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-medium text-red-600">
-                  {grandPending} pending
-                </span>
-                <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-600">
-                  {grandTotal} total
-                </span>
+                <span className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">{grandDone} completed</span>
+                <span className="rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-medium text-red-600">{grandPending} pending</span>
+                <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-600">{grandTotal} total</span>
               </div>
             </div>
           </div>
@@ -441,9 +415,9 @@ function DayGroup({ dateStr, label, items, isToday, past, onRefresh }: {
       <ul className="bg-white divide-y divide-stone-50">
         {items.map((item, idx) => (
           <li key={idx} className="px-4 py-2.5">
-            {item.kind === 'event' && <EventRow event={item.data} past={past} onDelete={() => { deleteCalendarEvent(item.data.id); onRefresh(); }} />}
-            {item.kind === 'todo'  && <TodoRow  todo={item.data}  past={past} onToggle={() => { toggleTodo(item.data.id);  onRefresh(); }} />}
-            {item.kind === 'goal'  && <GoalRow  goal={item.data}  past={past} onToggle={() => { toggleGoal(item.data.id);  onRefresh(); }} />}
+            {item.kind === 'event' && <EventRow event={item.data} past={past} onDelete={() => deleteCalendarEvent(item.data.id).then(() => onRefresh())} />}
+            {item.kind === 'todo'  && <TodoRow  todo={item.data}  past={past} onToggle={() => toggleTodo(item.data.id).then(() => onRefresh())} />}
+            {item.kind === 'goal'  && <GoalRow  goal={item.data}  past={past} onToggle={() => toggleGoal(item.data.id).then(() => onRefresh())} />}
           </li>
         ))}
       </ul>
