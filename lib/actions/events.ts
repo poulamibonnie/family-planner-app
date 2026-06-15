@@ -44,6 +44,12 @@ export async function addCalendarEvent(
   return event;
 }
 
+export async function toggleCalendarEvent(id: string): Promise<void> {
+  const [ev] = await db.select({ completed: calendarEvents.completed }).from(calendarEvents).where(eq(calendarEvents.id, id));
+  if (!ev) return;
+  await db.update(calendarEvents).set({ completed: !ev.completed }).where(eq(calendarEvents.id, id));
+}
+
 export async function markEventNotified(id: string): Promise<void> {
   await db.update(calendarEvents).set({ notified: true }).where(eq(calendarEvents.id, id));
 }

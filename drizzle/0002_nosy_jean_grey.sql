@@ -1,0 +1,1 @@
+ALTER TABLE `calendar_events` ADD `completed` integer DEFAULT false NOT NULL;

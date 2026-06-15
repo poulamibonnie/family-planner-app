@@ -73,6 +73,7 @@ export const calendarEvents = sqliteTable('calendar_events', {
   scope:               text('scope', { enum: ['self', 'family'] }).notNull(),
   userId:              text('user_id').notNull(),
   familyId:            text('family_id'),
+  completed:           integer('completed', { mode: 'boolean' }).notNull().default(false),
   notifyMinutesBefore: integer('notify_minutes_before').notNull(),
   notified:            integer('notified', { mode: 'boolean' }).notNull().default(false),
   reminderEmail:       text('reminder_email'),

@@ -15,6 +15,13 @@
       "when": 1781549450734,
       "tag": "0001_panoramic_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781556695629,
+      "tag": "0002_nosy_jean_grey",
+      "breakpoints": true
     }
   ]
 }

@@ -74,6 +74,7 @@ export interface CalendarEvent {
   scope: 'self' | 'family';
   userId: string;
   familyId?: string;
+  completed?: boolean;
   notifyMinutesBefore: number;
   notified: boolean;
   reminderEmail?: string;

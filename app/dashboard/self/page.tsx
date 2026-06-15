@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { getCurrentUser } from '@/lib/actions/auth';
 import { getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
 import { getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal } from '@/lib/actions/goals';
-import { getSelfEvents, shareEventToFamily } from '@/lib/actions/events';
+import { getSelfEvents, shareEventToFamily, toggleCalendarEvent } from '@/lib/actions/events';
 import { getGoogleConnection, getGoogleAuthUrl, syncGoogleCalendar } from '@/lib/actions/google';
 import type { User, TodoItem, Goal, CalendarEvent, GoogleConnection } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate, dateToDayOfWeek, getEndOfWeekISO, DAYS } from '@/lib/utils';
@@ -305,7 +305,16 @@ function GoogleEventRow({ event, familyId, onRefresh }: {
   onRefresh: () => void;
 }) {
   const [sharing, setSharing] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const completed = !!event.completed;
   const shared = !!event.sharedToFamilyAt;
+
+  async function handleToggle() {
+    setToggling(true);
+    await toggleCalendarEvent(event.id);
+    onRefresh();
+    setToggling(false);
+  }
 
   async function handleShare() {
     if (!familyId) return;
@@ -316,12 +325,34 @@ function GoogleEventRow({ event, familyId, onRefresh }: {
   }
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 px-3 py-2.5">
-      <GoogleIcon />
+    <div className="group flex items-center gap-3 rounded-xl border border-stone-100 bg-white px-4 py-3 shadow-sm transition hover:border-red-100">
+      {/* Checkbox */}
+      <button
+        onClick={handleToggle}
+        disabled={toggling}
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition disabled:opacity-50 ${
+          completed ? 'border-red-700 bg-red-700' : 'border-stone-300 hover:border-red-400'
+        }`}
+      >
+        {completed && (
+          <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </button>
+
+      {/* Title + time */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-stone-700 truncate">{event.title}</p>
+        <p className={`text-sm font-medium truncate ${completed ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
+          {event.title}
+        </p>
         {event.time && <p className="text-xs text-stone-400">{event.time}</p>}
       </div>
+
+      {/* Google badge */}
+      <GoogleIcon />
+
+      {/* Share button */}
       {familyId && (
         shared ? (
           <span className="shrink-0 rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
