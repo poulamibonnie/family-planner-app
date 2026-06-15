@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/actions/auth';
 import { getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
 import { getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal } from '@/lib/actions/goals';
 import { getSelfEvents, shareEventToFamily } from '@/lib/actions/events';
-import { getGoogleConnection, getGoogleAuthUrl, syncGoogleCalendar, disconnectGoogle } from '@/lib/actions/google';
+import { getGoogleConnection, getGoogleAuthUrl, syncGoogleCalendar } from '@/lib/actions/google';
 import type { User, TodoItem, Goal, CalendarEvent, GoogleConnection } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate, dateToDayOfWeek, getEndOfWeekISO, DAYS } from '@/lib/utils';
 import TodoList from '@/components/TodoList';
@@ -100,17 +100,24 @@ export default function SelfPage() {
     });
   }
 
-  async function handleGoogleDisconnect() {
-    await disconnectGoogle();
-    setGoogleConn(null);
-    load();
-  }
+  useEffect(() => {
+    if (!googleConn?.connected) return;
+    if (sessionStorage.getItem('fp_google_synced')) return;
+    sessionStorage.setItem('fp_google_synced', '1');
+    startSync(async () => {
+      const result = await syncGoogleCalendar();
+      if ('error' in result) {
+        showBanner('error', result.error);
+      } else {
+        if (result.synced > 0) showBanner('success', `Auto-synced ${result.synced} event${result.synced !== 1 ? 's' : ''} from Google Calendar.`);
+        load();
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [googleConn]);
 
   if (!user) return null;
 
-  const todayDone  = todos.filter(t => t.completed).length;
-  const weekDone   = weeklyGoals.filter(g => g.completed).length;
-  const yearDone   = yearlyGoals.filter(g => g.completed).length;
   const localEvents       = events.filter(e => e.source !== 'google');
   const todayGoogleEvents = events.filter(e => e.source === 'google' && e.date === today);
   const weekGoogleEvents  = events.filter(e => e.source === 'google' && e.date > today && e.date <= endOfWeek);
@@ -137,11 +144,6 @@ export default function SelfPage() {
           <p className="mt-1 text-sm text-stone-500">{formatDisplayDate(today)}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="hidden sm:flex gap-2">
-            <StatBadge label="Today" value={`${todayDone}/${todos.length}`}      color="red" />
-            <StatBadge label="Week"  value={`${weekDone}/${weeklyGoals.length}`} color="rose" />
-            <StatBadge label="Year"  value={`${yearDone}/${yearlyGoals.length}`} color="amber" />
-          </div>
           {/* Google sync button */}
           <div className="flex items-center gap-2">
             {googleConn?.connected ? (
@@ -158,12 +160,6 @@ export default function SelfPage() {
                   )}
                   {isSyncing ? 'Syncing…' : 'Sync Google Cal'}
                   {!isSyncing && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-                </button>
-                <button
-                  onClick={handleGoogleDisconnect}
-                  className="text-xs text-stone-400 hover:text-red-500 transition"
-                >
-                  disconnect
                 </button>
               </>
             ) : (
@@ -356,15 +352,6 @@ function GoogleIcon() {
   );
 }
 
-function StatBadge({ label, value, color }: { label: string; value: string; color: 'red' | 'rose' | 'amber' }) {
-  const cls = { red: 'bg-red-50 text-red-800 border-red-100', rose: 'bg-rose-50 text-rose-800 border-rose-100', amber: 'bg-amber-50 text-amber-800 border-amber-100' }[color];
-  return (
-    <div className={`rounded-xl border px-3 py-2 text-center ${cls}`}>
-      <p className="text-xs font-bold">{label}</p>
-      <p className="text-sm font-bold mt-0.5">{value}</p>
-    </div>
-  );
-}
 
 function greeting(): string {
   const h = new Date().getHours();
