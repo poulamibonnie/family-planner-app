@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getCurrentUser } from '@/lib/actions/auth';
 import { getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
 import { getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal } from '@/lib/actions/goals';
-import { getSelfEvents } from '@/lib/actions/events';
-import { shareEventToFamily } from '@/lib/actions/events';
-import { getGoogleConnection } from '@/lib/actions/google';
+import { getSelfEvents, shareEventToFamily } from '@/lib/actions/events';
+import { getGoogleConnection, getGoogleAuthUrl, syncGoogleCalendar, disconnectGoogle } from '@/lib/actions/google';
 import type { User, TodoItem, Goal, CalendarEvent, GoogleConnection } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate, dateToDayOfWeek, getEndOfWeekISO, DAYS } from '@/lib/utils';
 import TodoList from '@/components/TodoList';
@@ -15,9 +14,8 @@ import GoalList from '@/components/GoalList';
 import WeeklyBoard from '@/components/WeeklyBoard';
 import Reminders from '@/components/Reminders';
 import ProgressStats from '@/components/ProgressStats';
-import GoogleCalendarSync from '@/components/GoogleCalendarSync';
 
-type Tab = 'today' | 'weekly' | 'yearly' | 'reminders' | 'progress' | 'google';
+type Tab = 'today' | 'weekly' | 'yearly' | 'reminders' | 'progress';
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: 'today',     label: 'Today',        emoji: '🗒️' },
@@ -25,7 +23,6 @@ const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: 'yearly',    label: 'Yearly Goals', emoji: '⛩️' },
   { key: 'reminders', label: 'Reminders',    emoji: '🔔' },
   { key: 'progress',  label: 'Progress',     emoji: '📊' },
-  { key: 'google',    label: 'Google Cal',   emoji: '📅' },
 ];
 
 export default function SelfPage() {
@@ -41,12 +38,13 @@ export default function SelfPage() {
   const [yearlyGoals, setYearlyGoals] = useState<Goal[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [googleConn, setGoogleConn] = useState<GoogleConnection | null>(null);
-  const [googleBanner, setGoogleBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [banner, setBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isSyncing, startSync] = useTransition();
 
-  const today = todayISO();
-  const week  = getWeekNumber();
-  const year  = getYear();
-  const endOfWeek = getEndOfWeekISO();
+  const today      = todayISO();
+  const week       = getWeekNumber();
+  const year       = getYear();
+  const endOfWeek  = getEndOfWeekISO();
 
   const load = useCallback(async () => {
     const u = await getCurrentUser();
@@ -74,55 +72,110 @@ export default function SelfPage() {
 
   useEffect(() => {
     if (googleStatus === 'connected') {
-      setGoogleBanner({ type: 'success', text: 'Google Calendar connected! Click Sync Now to import your events.' });
-      setTab('google');
-      const t = setTimeout(() => setGoogleBanner(null), 6000);
-      return () => clearTimeout(t);
-    }
-    if (googleStatus === 'error') {
-      setGoogleBanner({ type: 'error', text: 'Google Calendar connection failed. Please try again.' });
-      setTab('google');
-      const t = setTimeout(() => setGoogleBanner(null), 6000);
-      return () => clearTimeout(t);
+      showBanner('success', 'Google Calendar connected! Click "Sync Google Cal" to import your events.');
+    } else if (googleStatus === 'error') {
+      showBanner('error', 'Google Calendar connection failed. Please try again.');
     }
   }, [googleStatus]);
+
+  function showBanner(type: 'success' | 'error', text: string) {
+    setBanner({ type, text });
+    setTimeout(() => setBanner(null), 5000);
+  }
+
+  async function handleGoogleConnect() {
+    const url = await getGoogleAuthUrl();
+    window.location.href = url;
+  }
+
+  function handleGoogleSync() {
+    startSync(async () => {
+      const result = await syncGoogleCalendar();
+      if ('error' in result) {
+        showBanner('error', result.error);
+      } else {
+        showBanner('success', `Synced ${result.synced} event${result.synced !== 1 ? 's' : ''} from Google Calendar.`);
+        load();
+      }
+    });
+  }
+
+  async function handleGoogleDisconnect() {
+    await disconnectGoogle();
+    setGoogleConn(null);
+    load();
+  }
 
   if (!user) return null;
 
   const todayDone  = todos.filter(t => t.completed).length;
   const weekDone   = weeklyGoals.filter(g => g.completed).length;
   const yearDone   = yearlyGoals.filter(g => g.completed).length;
-  const localEvents = events.filter(e => e.source !== 'google');
-
-  // Google events split by tab
+  const localEvents       = events.filter(e => e.source !== 'google');
   const todayGoogleEvents = events.filter(e => e.source === 'google' && e.date === today);
   const weekGoogleEvents  = events.filter(e => e.source === 'google' && e.date > today && e.date <= endOfWeek);
 
   return (
     <div className="space-y-6">
-      {googleBanner && (
+      {banner && (
         <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${
-          googleBanner.type === 'success'
+          banner.type === 'success'
             ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
             : 'border-red-200 bg-red-50 text-red-800'
         }`}>
-          <span>{googleBanner.type === 'success' ? '✅' : '⚠️'}</span>
-          {googleBanner.text}
+          <span>{banner.type === 'success' ? '✅' : '⚠️'}</span>
+          {banner.text}
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-stone-900">
             {greeting()}, {user.name.split(' ')[0]} 🌸
           </h1>
           <p className="mt-1 text-sm text-stone-500">{formatDisplayDate(today)}</p>
         </div>
-        <div className="hidden sm:flex gap-2">
-          <StatBadge label="Today" value={`${todayDone}/${todos.length}`}      color="red" />
-          <StatBadge label="Week"  value={`${weekDone}/${weeklyGoals.length}`} color="rose" />
-          <StatBadge label="Year"  value={`${yearDone}/${yearlyGoals.length}`} color="amber" />
+        <div className="flex flex-col items-end gap-2">
+          <div className="hidden sm:flex gap-2">
+            <StatBadge label="Today" value={`${todayDone}/${todos.length}`}      color="red" />
+            <StatBadge label="Week"  value={`${weekDone}/${weeklyGoals.length}`} color="rose" />
+            <StatBadge label="Year"  value={`${yearDone}/${yearlyGoals.length}`} color="amber" />
+          </div>
+          {/* Google sync button */}
+          <div className="flex items-center gap-2">
+            {googleConn?.connected ? (
+              <>
+                <button
+                  onClick={handleGoogleSync}
+                  disabled={isSyncing}
+                  className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm transition hover:bg-stone-50 disabled:opacity-60"
+                >
+                  {isSyncing ? (
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-stone-400 border-t-transparent" />
+                  ) : (
+                    <GoogleIcon />
+                  )}
+                  {isSyncing ? 'Syncing…' : 'Sync Google Cal'}
+                  {!isSyncing && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                </button>
+                <button
+                  onClick={handleGoogleDisconnect}
+                  className="text-xs text-stone-400 hover:text-red-500 transition"
+                >
+                  disconnect
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleGoogleConnect}
+                className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm transition hover:bg-stone-50"
+              >
+                <GoogleIcon />
+                Connect Google Calendar
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -138,9 +191,6 @@ export default function SelfPage() {
           >
             <span>{t.emoji}</span>
             <span>{t.label}</span>
-            {t.key === 'google' && googleConn?.connected && (
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            )}
           </button>
         ))}
       </div>
@@ -248,22 +298,6 @@ export default function SelfPage() {
             <ProgressStats todos={allTodos} weeklyGoals={allWeeklyGoals} yearlyGoals={yearlyGoals} />
           </div>
         )}
-
-        {tab === 'google' && (
-          <div>
-            <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">Google Calendar</h2>
-              <p className="text-sm text-stone-500 mt-1">
-                Syncs today&apos;s events into the <strong>Today</strong> tab and this week&apos;s events into the <strong>Weekly Goals</strong> tab.
-              </p>
-            </div>
-            <GoogleCalendarSync
-              connected={!!googleConn?.connected}
-              calendarId={googleConn?.calendarId ?? null}
-              onRefresh={load}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -313,7 +347,7 @@ function GoogleEventRow({ event, familyId, onRefresh }: {
 
 function GoogleIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 18 18" fill="none" className="shrink-0">
+    <svg width="13" height="13" viewBox="0 0 18 18" fill="none" className="shrink-0">
       <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
       <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
       <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
