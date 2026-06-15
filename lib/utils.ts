@@ -27,6 +27,18 @@ export function generateId(): string {
 }
 
 export const DAYS: readonly string[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+export function dateToDayOfWeek(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
+}
+
+export function getEndOfWeekISO(): string {
+  const now = new Date();
+  const daysUntilSunday = now.getDay() === 0 ? 0 : 7 - now.getDay();
+  const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday);
+  return sunday.toISOString().split('T')[0];
+}
 export const MEAL_TYPES: readonly string[] = ['breakfast', 'lunch', 'dinner'];
 
 export function goalDayToISO(weekNumber: number, year: number, day: string): string {
