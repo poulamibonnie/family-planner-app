@@ -76,5 +76,19 @@ export const calendarEvents = sqliteTable('calendar_events', {
   notifyMinutesBefore: integer('notify_minutes_before').notNull(),
   notified:            integer('notified', { mode: 'boolean' }).notNull().default(false),
   reminderEmail:       text('reminder_email'),
+  source:              text('source', { enum: ['local', 'google'] }).notNull().default('local'),
+  googleEventId:       text('google_event_id'),
+  sharedFromId:        text('shared_from_id'),
+  sharedToFamilyAt:    text('shared_to_family_at'),
   createdAt:           text('created_at').notNull(),
+});
+
+export const googleConnections = sqliteTable('google_connections', {
+  id:           text('id').primaryKey(),
+  userId:       text('user_id').notNull().unique(),
+  accessToken:  text('access_token').notNull(),
+  refreshToken: text('refresh_token'),
+  expiresAt:    text('expires_at').notNull(),
+  calendarId:   text('calendar_id').notNull(),
+  createdAt:    text('created_at').notNull(),
 });

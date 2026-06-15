@@ -8,6 +8,13 @@
       "when": 1781227115016,
       "tag": "0000_empty_squirrel_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781549450734,
+      "tag": "0001_panoramic_sumo",
+      "breakpoints": true
     }
   ]
 }

@@ -77,5 +77,14 @@ export interface CalendarEvent {
   notifyMinutesBefore: number;
   notified: boolean;
   reminderEmail?: string;
+  source?: 'local' | 'google';
+  googleEventId?: string;
+  sharedFromId?: string;
+  sharedToFamilyAt?: string;
   createdAt: string;
+}
+
+export interface GoogleConnection {
+  connected: boolean;
+  calendarId: string;
 }

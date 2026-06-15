@@ -1,19 +1,22 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { getCurrentUser } from '@/lib/actions/auth';
 import { getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
 import { getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal } from '@/lib/actions/goals';
 import { getSelfEvents } from '@/lib/actions/events';
-import type { User, TodoItem, Goal, CalendarEvent } from '@/lib/types';
+import { getGoogleConnection } from '@/lib/actions/google';
+import type { User, TodoItem, Goal, CalendarEvent, GoogleConnection } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate } from '@/lib/utils';
 import TodoList from '@/components/TodoList';
 import GoalList from '@/components/GoalList';
 import WeeklyBoard from '@/components/WeeklyBoard';
 import Reminders from '@/components/Reminders';
 import ProgressStats from '@/components/ProgressStats';
+import GoogleCalendarSync from '@/components/GoogleCalendarSync';
 
-type Tab = 'today' | 'weekly' | 'yearly' | 'reminders' | 'progress';
+type Tab = 'today' | 'weekly' | 'yearly' | 'reminders' | 'progress' | 'google';
 
 const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: 'today',     label: 'Today',        emoji: '🗒️' },
@@ -21,9 +24,13 @@ const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: 'yearly',    label: 'Yearly Goals', emoji: '⛩️' },
   { key: 'reminders', label: 'Reminders',    emoji: '🔔' },
   { key: 'progress',  label: 'Progress',     emoji: '📊' },
+  { key: 'google',    label: 'Google Cal',   emoji: '📅' },
 ];
 
 export default function SelfPage() {
+  const searchParams = useSearchParams();
+  const googleStatus = searchParams.get('google');
+
   const [tab, setTab] = useState<Tab>('today');
   const [user, setUser] = useState<User | null>(null);
   const [todos, setTodos] = useState<TodoItem[]>([]);
@@ -32,6 +39,8 @@ export default function SelfPage() {
   const [allWeeklyGoals, setAllWeeklyGoals] = useState<Goal[]>([]);
   const [yearlyGoals, setYearlyGoals] = useState<Goal[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [googleConn, setGoogleConn] = useState<GoogleConnection | null>(null);
+  const [googleBanner, setGoogleBanner] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const today = todayISO();
   const week  = getWeekNumber();
@@ -41,13 +50,14 @@ export default function SelfPage() {
     const u = await getCurrentUser();
     if (!u) return;
     setUser(u);
-    const [todayTodos, allTodosData, weekly, allWeekly, yearly, eventsData] = await Promise.all([
+    const [todayTodos, allTodosData, weekly, allWeekly, yearly, eventsData, connData] = await Promise.all([
       getSelfTodos(u.id, today),
       getSelfAllTodos(u.id),
       getSelfGoals(u.id, 'weekly', week, year),
       getSelfAllGoals(u.id, 'weekly'),
       getSelfGoals(u.id, 'yearly', undefined, year),
       getSelfEvents(u.id),
+      getGoogleConnection(),
     ]);
     setTodos(todayTodos);
     setAllTodos(allTodosData);
@@ -55,18 +65,47 @@ export default function SelfPage() {
     setAllWeeklyGoals(allWeekly);
     setYearlyGoals(yearly);
     setEvents(eventsData);
+    setGoogleConn(connData);
   }, [today, week, year]);
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (googleStatus === 'connected') {
+      setGoogleBanner({ type: 'success', text: 'Google Calendar connected! Click Sync Now to import your events.' });
+      setTab('google');
+      const t = setTimeout(() => setGoogleBanner(null), 6000);
+      return () => clearTimeout(t);
+    }
+    if (googleStatus === 'error') {
+      setGoogleBanner({ type: 'error', text: 'Google Calendar connection failed. Please try again.' });
+      setTab('google');
+      const t = setTimeout(() => setGoogleBanner(null), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [googleStatus]);
+
   if (!user) return null;
 
-  const todayDone = todos.filter(t => t.completed).length;
-  const weekDone  = weeklyGoals.filter(g => g.completed).length;
-  const yearDone  = yearlyGoals.filter(g => g.completed).length;
+  const todayDone   = todos.filter(t => t.completed).length;
+  const weekDone    = weeklyGoals.filter(g => g.completed).length;
+  const yearDone    = yearlyGoals.filter(g => g.completed).length;
+  const googleEvents = events.filter(e => e.source === 'google');
+  const localEvents  = events.filter(e => e.source !== 'google');
 
   return (
     <div className="space-y-6">
+      {googleBanner && (
+        <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm ${
+          googleBanner.type === 'success'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            : 'border-red-200 bg-red-50 text-red-800'
+        }`}>
+          <span>{googleBanner.type === 'success' ? '✅' : '⚠️'}</span>
+          {googleBanner.text}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -94,6 +133,9 @@ export default function SelfPage() {
           >
             <span>{t.emoji}</span>
             <span>{t.label}</span>
+            {t.key === 'google' && googleConn?.connected && (
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            )}
           </button>
         ))}
       </div>
@@ -152,7 +194,7 @@ export default function SelfPage() {
               <h2 className="text-lg font-semibold text-stone-800">Reminders</h2>
               <p className="text-sm text-stone-500 mt-1">Set reminders with browser notifications and email alerts</p>
             </div>
-            <Reminders events={events} userId={user.id} scope="self" onRefresh={load} />
+            <Reminders events={localEvents} userId={user.id} scope="self" onRefresh={load} />
           </div>
         )}
 
@@ -163,6 +205,24 @@ export default function SelfPage() {
               <p className="text-sm text-stone-500 mt-1">Track completed and pending tasks across all time periods</p>
             </div>
             <ProgressStats todos={allTodos} weeklyGoals={allWeeklyGoals} yearlyGoals={yearlyGoals} />
+          </div>
+        )}
+
+        {tab === 'google' && (
+          <div>
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-stone-800">Google Calendar</h2>
+              <p className="text-sm text-stone-500 mt-1">
+                Import events from Google Calendar. Share individual events with your family on request.
+              </p>
+            </div>
+            <GoogleCalendarSync
+              connected={!!googleConn?.connected}
+              calendarId={googleConn?.calendarId ?? null}
+              events={googleEvents}
+              familyId={user.familyId}
+              onRefresh={load}
+            />
           </div>
         )}
       </div>

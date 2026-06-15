@@ -6,13 +6,38 @@ import { calendarEvents } from '../schema';
 import { generateId } from '../utils';
 import type { CalendarEvent } from '../types';
 
+export async function shareEventToFamily(eventId: string, familyId: string): Promise<void> {
+  const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, eventId));
+  if (!event) return;
+  await db.insert(calendarEvents).values({
+    id: generateId(),
+    title: event.title,
+    date: event.date,
+    time: event.time,
+    description: event.description,
+    scope: 'family',
+    userId: event.userId,
+    familyId,
+    notifyMinutesBefore: event.notifyMinutesBefore,
+    notified: false,
+    source: event.source ?? 'local',
+    sharedFromId: event.id,
+    createdAt: new Date().toISOString(),
+  });
+  await db
+    .update(calendarEvents)
+    .set({ sharedToFamilyAt: new Date().toISOString() })
+    .where(eq(calendarEvents.id, eventId));
+}
+
 export async function addCalendarEvent(
-  data: Omit<CalendarEvent, 'id' | 'createdAt' | 'notified'>,
+  data: Omit<CalendarEvent, 'id' | 'createdAt' | 'notified' | 'source'>,
 ): Promise<CalendarEvent> {
   const event: CalendarEvent = {
     ...data,
     id: generateId(),
     notified: false,
+    source: 'local',
     createdAt: new Date().toISOString(),
   };
   await db.insert(calendarEvents).values(event);
