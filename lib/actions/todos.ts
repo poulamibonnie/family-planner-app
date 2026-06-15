@@ -6,6 +6,28 @@ import { todos } from '../schema';
 import { generateId } from '../utils';
 import type { TodoItem } from '../types';
 
+export async function shareTodoToFamily(todoId: string, familyId: string): Promise<void> {
+  const [todo] = await db.select().from(todos).where(eq(todos.id, todoId));
+  if (!todo) return;
+  await db.insert(todos).values({
+    id: generateId(),
+    text: todo.text,
+    completed: false,
+    date: todo.date,
+    userId: todo.userId,
+    scope: 'family',
+    familyId,
+    sharedFromId: todo.id,
+    createdAt: new Date().toISOString(),
+  });
+  await db.update(todos).set({ sharedToFamilyAt: new Date().toISOString() }).where(eq(todos.id, todoId));
+}
+
+export async function unshareTodoFromFamily(todoId: string): Promise<void> {
+  await db.delete(todos).where(eq(todos.sharedFromId, todoId));
+  await db.update(todos).set({ sharedToFamilyAt: null }).where(eq(todos.id, todoId));
+}
+
 export async function addTodo(data: Omit<TodoItem, 'id' | 'createdAt'>): Promise<TodoItem> {
   const todo: TodoItem = { ...data, id: generateId(), createdAt: new Date().toISOString() };
   await db.insert(todos).values(todo);

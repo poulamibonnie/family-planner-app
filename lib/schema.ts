@@ -19,28 +19,32 @@ export const families = sqliteTable('families', {
 });
 
 export const todos = sqliteTable('todos', {
-  id:        text('id').primaryKey(),
-  text:      text('text').notNull(),
-  completed: integer('completed', { mode: 'boolean' }).notNull().default(false),
-  date:      text('date').notNull(),
-  userId:    text('user_id').notNull(),
-  scope:     text('scope', { enum: ['self', 'family'] }).notNull(),
-  familyId:  text('family_id'),
-  createdAt: text('created_at').notNull(),
+  id:               text('id').primaryKey(),
+  text:             text('text').notNull(),
+  completed:        integer('completed', { mode: 'boolean' }).notNull().default(false),
+  date:             text('date').notNull(),
+  userId:           text('user_id').notNull(),
+  scope:            text('scope', { enum: ['self', 'family'] }).notNull(),
+  familyId:         text('family_id'),
+  sharedFromId:     text('shared_from_id'),
+  sharedToFamilyAt: text('shared_to_family_at'),
+  createdAt:        text('created_at').notNull(),
 });
 
 export const goals = sqliteTable('goals', {
-  id:         text('id').primaryKey(),
-  text:       text('text').notNull(),
-  completed:  integer('completed', { mode: 'boolean' }).notNull().default(false),
-  type:       text('type', { enum: ['weekly', 'yearly'] }).notNull(),
-  weekNumber: integer('week_number'),
-  year:       integer('year').notNull(),
-  day:        text('day'),
-  userId:     text('user_id').notNull(),
-  scope:      text('scope', { enum: ['self', 'family'] }).notNull(),
-  familyId:   text('family_id'),
-  createdAt:  text('created_at').notNull(),
+  id:               text('id').primaryKey(),
+  text:             text('text').notNull(),
+  completed:        integer('completed', { mode: 'boolean' }).notNull().default(false),
+  type:             text('type', { enum: ['weekly', 'yearly'] }).notNull(),
+  weekNumber:       integer('week_number'),
+  year:             integer('year').notNull(),
+  day:              text('day'),
+  userId:           text('user_id').notNull(),
+  scope:            text('scope', { enum: ['self', 'family'] }).notNull(),
+  familyId:         text('family_id'),
+  sharedFromId:     text('shared_from_id'),
+  sharedToFamilyAt: text('shared_to_family_at'),
+  createdAt:        text('created_at').notNull(),
 });
 
 export const shoppingItems = sqliteTable('shopping_items', {

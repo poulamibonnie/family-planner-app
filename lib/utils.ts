@@ -33,6 +33,13 @@ export function dateToDayOfWeek(dateStr: string): string {
   return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
 }
 
+export function getStartOfWeekISO(): string {
+  const now = new Date();
+  const daysToMonday = (now.getDay() + 6) % 7;
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
+  return monday.toISOString().split('T')[0];
+}
+
 export function getEndOfWeekISO(): string {
   const now = new Date();
   const daysUntilSunday = now.getDay() === 0 ? 0 : 7 - now.getDay();

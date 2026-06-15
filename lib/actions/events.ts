@@ -6,6 +6,11 @@ import { calendarEvents } from '../schema';
 import { generateId } from '../utils';
 import type { CalendarEvent } from '../types';
 
+export async function unshareEventFromFamily(eventId: string): Promise<void> {
+  await db.delete(calendarEvents).where(eq(calendarEvents.sharedFromId, eventId));
+  await db.update(calendarEvents).set({ sharedToFamilyAt: null }).where(eq(calendarEvents.id, eventId));
+}
+
 export async function shareEventToFamily(eventId: string, familyId: string): Promise<void> {
   const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, eventId));
   if (!event) return;

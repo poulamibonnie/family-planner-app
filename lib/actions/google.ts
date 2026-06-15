@@ -77,12 +77,13 @@ export async function syncGoogleCalendar(): Promise<{ synced: number } | { error
     }
   }
 
-  // Fetch today through end of this week (Sunday 23:59:59)
+  // Fetch entire current week: Monday 00:00:00 → Sunday 23:59:59
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysToMonday = (now.getDay() + 6) % 7;
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
   const daysUntilSunday = now.getDay() === 0 ? 0 : 7 - now.getDay();
   const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 23, 59, 59);
-  const timeMin = todayStart.toISOString();
+  const timeMin = weekStart.toISOString();
   const timeMax = weekEnd.toISOString();
 
   let events: Awaited<ReturnType<typeof fetchCalendarEvents>>;

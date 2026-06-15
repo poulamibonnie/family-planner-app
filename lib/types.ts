@@ -24,6 +24,8 @@ export interface TodoItem {
   userId: string;
   scope: 'self' | 'family';
   familyId?: string;
+  sharedFromId?: string;
+  sharedToFamilyAt?: string;
   createdAt: string;
 }
 
@@ -38,6 +40,8 @@ export interface Goal {
   userId: string;
   scope: 'self' | 'family';
   familyId?: string;
+  sharedFromId?: string;
+  sharedToFamilyAt?: string;
   createdAt: string;
 }
 

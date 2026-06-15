@@ -22,6 +22,20 @@
       "when": 1781556695629,
       "tag": "0002_nosy_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781559126128,
+      "tag": "0003_misty_boomerang",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1781561719026,
+      "tag": "0004_graceful_marvex",
+      "breakpoints": true
     }
   ]
 }
