@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { getFamilyById, getFamilyMembers, updateFamilyPhoto, updateFamilyEmergencyContacts } from '@/lib/actions/family';
+import { useState, useEffect, useCallback } from 'react';
+import { getFamilyById, getFamilyMembers, updateFamilyEmergencyContacts } from '@/lib/actions/family';
 import { getFamilyAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
 import { getFamilyShoppingItems, addShoppingItem, toggleShoppingItem, deleteShoppingItem } from '@/lib/actions/shopping';
 import { getFamilyEvents, toggleCalendarEvent } from '@/lib/actions/events';
@@ -42,27 +42,6 @@ function parseContacts(json?: string | null): EmergencyContact[] {
   try { return JSON.parse(json); } catch { return []; }
 }
 
-async function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 480;
-        const scale = Math.min(MAX / img.width, MAX / img.height, 1);
-        const canvas = document.createElement('canvas');
-        canvas.width  = Math.round(img.width  * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
-      };
-      img.onerror = reject;
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function FamilyPage() {
   const user = useUser();
@@ -80,8 +59,6 @@ export default function FamilyPage() {
   const [contacts,       setContacts]       = useState<EmergencyContact[]>([]);
   const [addingContact,  setAddingContact]  = useState(false);
   const [contactForm,    setContactForm]    = useState({ name: '', relationship: '', phone: '' });
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const today = todayISO();
   const week  = getWeekNumber();
@@ -124,21 +101,6 @@ export default function FamilyPage() {
         <FamilyManager user={user} family={undefined} onFamilyChange={load} />
       </div>
     );
-  }
-
-  /* ── photo upload ── */
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhotoUploading(true);
-    try {
-      const base64 = await compressImage(file);
-      await updateFamilyPhoto(family!.id, base64);
-      load();
-    } finally {
-      setPhotoUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
   }
 
   /* ── emergency contacts ── */
@@ -199,47 +161,6 @@ export default function FamilyPage() {
         {tab === 'details' && (
           <div className="space-y-8">
             <h2 className="text-xl font-bold text-stone-800">Family Details</h2>
-
-            {/* Family Photo */}
-            <Section label="Family Photo">
-              <div className="flex items-center gap-5">
-                <div className="h-24 w-24 shrink-0 rounded-2xl overflow-hidden border-2 border-stone-200 bg-stone-100 flex items-center justify-center text-4xl">
-                  {family.photoUrl
-                    ? <img src={family.photoUrl} alt={family.name} className="h-full w-full object-cover" />
-                    : '📷'
-                  }
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-stone-600">
-                    Add a photo that represents your family. It will be visible to all members.
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={photoUploading}
-                      className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 transition disabled:opacity-50"
-                    >
-                      {photoUploading ? 'Uploading…' : family.photoUrl ? 'Change Photo' : 'Upload Photo'}
-                    </button>
-                    {family.photoUrl && (
-                      <button
-                        onClick={async () => { await updateFamilyPhoto(family.id, null); load(); }}
-                        className="rounded-lg border border-stone-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            </Section>
 
             {/* Members */}
             <Section label={`Members · ${members.length}`}>
