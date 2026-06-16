@@ -145,18 +145,25 @@ export default function SelfPage() {
           <p className="mt-1.5 text-sm text-stone-500 font-medium">{formatDisplayDate(today)}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          {/* Google sync button */}
           <div className="flex items-center gap-2">
+            {/* Share with family button */}
+            {user.familyId && (
+              <button
+                onClick={() => setShareOpen(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm transition hover:bg-stone-50"
+              >
+                Share with Family 👨‍👩‍👧
+              </button>
+            )}
+            {/* Google sync button */}
             {googleConn?.connected ? (
-              <>
-                <button
-                  onClick={handleGoogleSync}
-                  disabled={isSyncing}
-                  className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm transition hover:bg-stone-50 disabled:opacity-60"
-                >
-                  {isSyncing ? '⏳ Syncing…' : 'Google Calendar 🗓️'}
-                </button>
-              </>
+              <button
+                onClick={handleGoogleSync}
+                disabled={isSyncing}
+                className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm transition hover:bg-stone-50 disabled:opacity-60"
+              >
+                {isSyncing ? '⏳ Syncing…' : 'Google Calendar 🗓️'}
+              </button>
             ) : (
               <button
                 onClick={handleGoogleConnect}
@@ -169,6 +176,68 @@ export default function SelfPage() {
           </div>
         </div>
       </div>
+
+      {/* Share with Family panel */}
+      {shareOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]" onClick={() => setShareOpen(false)} />
+          <div className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">
+              <h2 className="text-base font-bold text-stone-800">Share with Family 👨‍👩‍👧</h2>
+              <button onClick={() => setShareOpen(false)} className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition" aria-label="Close">
+                <svg className="h-5 w-5" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+              {(weeklyGoals.length === 0 && weekGoogleEvents.length === 0) ? (
+                <p className="text-sm text-stone-400 text-center py-8">No tasks this week to share.</p>
+              ) : (
+                DAYS.filter(day =>
+                  weeklyGoals.some(g => g.day === day) ||
+                  weekGoogleEvents.some(e => dateToDayOfWeek(e.date) === day)
+                ).map(day => (
+                  <div key={day}>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-400">{day}</p>
+                    <div className="space-y-2">
+                      {weeklyGoals.filter(g => g.day === day).map(goal => (
+                        <label key={goal.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 transition hover:bg-stone-100">
+                          <input
+                            type="checkbox"
+                            checked={!!goal.sharedToFamilyAt}
+                            onChange={async e => {
+                              e.target.checked ? await shareGoalToFamily(goal.id, user.familyId!) : await unshareGoalFromFamily(goal.id);
+                              load();
+                            }}
+                            className="h-4 w-4 shrink-0 cursor-pointer accent-red-600"
+                          />
+                          <span className={`flex-1 text-sm ${goal.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>{goal.text}</span>
+                        </label>
+                      ))}
+                      {weekGoogleEvents.filter(e => dateToDayOfWeek(e.date) === day).map(ev => (
+                        <label key={ev.id} className="flex cursor-pointer items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 transition hover:bg-stone-100">
+                          <input
+                            type="checkbox"
+                            checked={!!ev.sharedToFamilyAt}
+                            onChange={async e => {
+                              e.target.checked ? await shareEventToFamily(ev.id, user.familyId!) : await unshareEventFromFamily(ev.id);
+                              load();
+                            }}
+                            className="h-4 w-4 shrink-0 cursor-pointer accent-red-600"
+                          />
+                          <GoogleIcon />
+                          <span className={`flex-1 text-sm ${ev.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>{ev.title}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1.5 rounded-xl bg-stone-100 p-1.5 overflow-x-auto">
@@ -349,99 +418,6 @@ export default function SelfPage() {
               />
             </div>
 
-            {/* Share with family — collapsible */}
-            {(weeklyGoals.length > 0 || weekGoogleEvents.length > 0) && (
-              <div className="rounded-2xl border border-stone-100 bg-white shadow-sm overflow-hidden">
-                {/* Collapsible header */}
-                <button
-                  onClick={() => setShareOpen(o => !o)}
-                  className="flex w-full items-center justify-between px-6 py-4 text-left hover:bg-stone-50 transition"
-                >
-                  <h2 className="text-xl font-bold text-stone-800">Share with family</h2>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                      {weeklyGoals.length + weekGoogleEvents.length} task{weeklyGoals.length + weekGoogleEvents.length !== 1 ? 's' : ''}
-                    </span>
-                    <svg
-                      className={`h-4 w-4 text-stone-400 transition-transform duration-200 ${shareOpen ? 'rotate-180' : ''}`}
-                      fill="none" viewBox="0 0 16 16"
-                    >
-                      <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </button>
-
-                {/* Collapsible body */}
-                {shareOpen && (
-                  <div className="border-t border-stone-100 px-6 py-5 space-y-5">
-                    {DAYS.filter(day =>
-                      weeklyGoals.some(g => g.day === day) ||
-                      weekGoogleEvents.some(e => dateToDayOfWeek(e.date) === day)
-                    ).map(day => (
-                      <div key={day}>
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-400">{day}</p>
-                        <div className="space-y-2">
-                          {/* Manual goals */}
-                          {weeklyGoals.filter(g => g.day === day).map(goal => (
-                            <label
-                              key={goal.id}
-                              className="flex cursor-pointer items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 transition hover:bg-stone-100"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={!!goal.sharedToFamilyAt}
-                                disabled={!user.familyId}
-                                onChange={async e => {
-                                  if (e.target.checked) {
-                                    await shareGoalToFamily(goal.id, user.familyId!);
-                                  } else {
-                                    await unshareGoalFromFamily(goal.id);
-                                  }
-                                  load();
-                                }}
-                                className="h-4 w-4 shrink-0 cursor-pointer accent-red-600"
-                              />
-                              <span className={`flex-1 text-sm ${goal.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>
-                                {goal.text}
-                              </span>
-                            </label>
-                          ))}
-                          {/* Google Calendar events */}
-                          {weekGoogleEvents.filter(e => dateToDayOfWeek(e.date) === day).map(ev => (
-                            <label
-                              key={ev.id}
-                              className="flex cursor-pointer items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 px-4 py-3 transition hover:bg-stone-100"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={!!ev.sharedToFamilyAt}
-                                disabled={!user.familyId}
-                                onChange={async e => {
-                                  if (e.target.checked) {
-                                    await shareEventToFamily(ev.id, user.familyId!);
-                                  } else {
-                                    await unshareEventFromFamily(ev.id);
-                                  }
-                                  load();
-                                }}
-                                className="h-4 w-4 shrink-0 cursor-pointer accent-red-600"
-                              />
-                              <GoogleIcon />
-                              <span className={`flex-1 text-sm ${ev.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>
-                                {ev.title}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                    {!user.familyId && (
-                      <p className="text-xs text-stone-400 text-center pt-1">Join a family to share tasks</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
 
