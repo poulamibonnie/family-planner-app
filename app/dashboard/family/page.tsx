@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getCurrentUser } from '@/lib/actions/auth';
 import { getFamilyById, getFamilyMembers, updateFamilyPhoto, updateFamilyEmergencyContacts } from '@/lib/actions/family';
 import { getFamilyAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
 import { getFamilyShoppingItems, addShoppingItem, toggleShoppingItem, deleteShoppingItem } from '@/lib/actions/shopping';
@@ -12,6 +11,7 @@ import FamilyManager from '@/components/FamilyManager';
 import ShoppingList from '@/components/ShoppingList';
 import MealPlan from '@/components/MealPlan';
 import Reminders from '@/components/Reminders';
+import { useUser } from '@/lib/user-context';
 
 type Tab = 'details' | 'tasks' | 'shopping' | 'meals' | 'reminders';
 
@@ -65,8 +65,9 @@ async function compressImage(file: File): Promise<string> {
 }
 
 export default function FamilyPage() {
+  const user = useUser();
+
   const [tab,         setTab]         = useState<Tab>('details');
-  const [user,        setUser]        = useState<User | null>(null);
   const [family,      setFamily]      = useState<Family | undefined>(undefined);
   const [allTodos,    setAllTodos]    = useState<TodoItem[]>([]);
   const [shopping,    setShopping]    = useState<ShoppingItem[]>([]);
@@ -87,10 +88,8 @@ export default function FamilyPage() {
   const year  = getYear();
 
   const load = useCallback(async () => {
-    const u = await getCurrentUser();
-    if (!u) return;
-    setUser(u);
-    const f = u.familyId ? await getFamilyById(u.familyId) : null;
+    if (!user) return;
+    const f = user.familyId ? await getFamilyById(user.familyId) : null;
     setFamily(f ?? undefined);
     if (f) {
       const [allTodosData, shopItems, eventsData, membersData] = await Promise.all([
@@ -105,7 +104,7 @@ export default function FamilyPage() {
       setMembers(membersData);
       setContacts(parseContacts(f.emergencyContacts));
     }
-  }, [today, week, year]);
+  }, [user, today, week, year]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -164,52 +163,11 @@ export default function FamilyPage() {
   return (
     <div className="space-y-5">
 
-      {/* ══════════════════════════════════
-          FAMILY HEADER — plain, no dropdown
-      ══════════════════════════════════ */}
-      <div
-        className="rounded-2xl overflow-hidden shadow-md"
-        style={{ background: 'linear-gradient(135deg, #2F4F3E 0%, #3a5a47 55%, #6E8B6B 100%)' }}
-      >
-        <div className="flex items-center gap-4 px-6 py-5">
-          {/* Family photo */}
-          <div className="relative h-14 w-14 shrink-0">
-            <div className="h-14 w-14 rounded-2xl overflow-hidden ring-2 ring-white/25 bg-white/15 flex items-center justify-center text-3xl">
-              {family.photoUrl
-                ? <img src={family.photoUrl} alt={family.name} className="h-full w-full object-cover" />
-                : '🏮'
-              }
-            </div>
-          </div>
-
-          {/* Name + count */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-white leading-tight truncate">{family.name}</h1>
-            <p className="text-sm text-white/60 mt-0.5">
-              {members.length} member{members.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-
-          {/* Stacked avatars */}
-          <div className="flex -space-x-2.5 shrink-0">
-            {members.slice(0, 4).map(m => (
-              <div
-                key={m.id}
-                title={m.name}
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ring-2 ring-white/25 ${
-                  m.id === user.id ? 'bg-white/35 text-white' : 'bg-white/15 text-white/85'
-                }`}
-              >
-                {avatarInitials(m.name)}
-              </div>
-            ))}
-            {members.length > 4 && (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white/65 ring-2 ring-white/25">
-                +{members.length - 4}
-              </div>
-            )}
-          </div>
-        </div>
+      {/* FAMILY HEADER */}
+      <div>
+        <h1 className="text-3xl font-bold text-stone-900 leading-tight">
+          Welcome, {family.name}
+        </h1>
       </div>
 
       {/* ══════════════════════════════════

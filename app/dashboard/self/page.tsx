@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getCurrentUser } from '@/lib/actions/auth';
 import { getSelfTodos, getSelfAllTodos, addTodo, toggleTodo, deleteTodo, shareTodoToFamily, unshareTodoFromFamily } from '@/lib/actions/todos';
 import { getSelfGoals, getSelfAllGoals, addGoal, toggleGoal, deleteGoal, shareGoalToFamily, unshareGoalFromFamily } from '@/lib/actions/goals';
 import { getSelfEvents, shareEventToFamily, unshareEventFromFamily, toggleCalendarEvent } from '@/lib/actions/events';
 import { getGoogleConnection, getGoogleAuthUrl, syncGoogleCalendar } from '@/lib/actions/google';
-import type { User, TodoItem, Goal, CalendarEvent, GoogleConnection } from '@/lib/types';
+import type { TodoItem, Goal, CalendarEvent, GoogleConnection } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate, getStartOfWeekISO, getEndOfWeekISO, dateToDayOfWeek, DAYS } from '@/lib/utils';
 import GoalList from '@/components/GoalList';
 import WeeklyBoard from '@/components/WeeklyBoard';
 import Reminders from '@/components/Reminders';
 import ProgressStats from '@/components/ProgressStats';
+import { useUser } from '@/lib/user-context';
 
 type Tab = 'today' | 'weekly' | 'yearly' | 'reminders' | 'progress';
 
@@ -28,10 +28,11 @@ export default function SelfPage() {
   const searchParams = useSearchParams();
   const googleStatus = searchParams.get('google');
 
+  const user = useUser();
+
   const [tab, setTab] = useState<Tab>('today');
   const [todoInput, setTodoInput] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [allTodos, setAllTodos] = useState<TodoItem[]>([]);
   const [weeklyGoals, setWeeklyGoals] = useState<Goal[]>([]);
@@ -49,16 +50,14 @@ export default function SelfPage() {
   const endOfWeek   = getEndOfWeekISO();
 
   const load = useCallback(async () => {
-    const u = await getCurrentUser();
-    if (!u) return;
-    setUser(u);
+    if (!user) return;
     const [todayTodos, allTodosData, weekly, allWeekly, yearly, eventsData, connData] = await Promise.all([
-      getSelfTodos(u.id, today),
-      getSelfAllTodos(u.id),
-      getSelfGoals(u.id, 'weekly', week, year),
-      getSelfAllGoals(u.id, 'weekly'),
-      getSelfGoals(u.id, 'yearly', undefined, year),
-      getSelfEvents(u.id),
+      getSelfTodos(user.id, today),
+      getSelfAllTodos(user.id),
+      getSelfGoals(user.id, 'weekly', week, year),
+      getSelfAllGoals(user.id, 'weekly'),
+      getSelfGoals(user.id, 'yearly', undefined, year),
+      getSelfEvents(user.id),
       getGoogleConnection(),
     ]);
     setTodos(todayTodos);
@@ -68,7 +67,7 @@ export default function SelfPage() {
     setYearlyGoals(yearly);
     setEvents(eventsData);
     setGoogleConn(connData);
-  }, [today, week, year]);
+  }, [user, today, week, year]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -582,3 +581,4 @@ function greeting(): string {
   if (h < 17) return 'Good afternoon';
   return 'Good evening';
 }
+
