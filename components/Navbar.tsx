@@ -108,7 +108,7 @@ export default function Navbar({ user }: Props) {
         <div className="relative flex shrink-0 items-center gap-3" ref={menuRef}>
           <div className="hidden sm:block text-right">
             <p className="text-sm font-semibold text-white leading-none">{displayName}</p>
-            <p className="text-xs text-red-300">{user.email}</p>
+            <p className="text-xs text-white/55">{user.email}</p>
           </div>
 
           <button

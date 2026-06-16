@@ -62,22 +62,25 @@ export default function WeeklyBoard({ goals, weekNumber, year, onAdd, onToggle, 
         return (
           <div
             key={day}
-            className={`flex flex-col rounded-2xl border ${c.border} ${c.bg} shadow-sm transition ${
+            className={`group flex flex-col rounded-2xl border-2 ${c.border} ${c.bg} shadow-sm transition-all duration-200 hover:shadow-md ${
               isToday ? `ring-2 ring-offset-2 ${c.ring}` : ''
             }`}
           >
             {/* Card header */}
-            <div className="flex items-start justify-between px-4 pt-4 pb-2">
+            <div className="flex items-start justify-between px-5 pt-5 pb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <p className={`text-sm font-bold ${c.title}`}>{day}</p>
+                  <p className={`text-base font-bold ${c.title}`}>{day}</p>
                   {isToday && (
-                    <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white leading-none"
+                      style={{ background: '#E07A5F' }}
+                    >
                       Today
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-stone-400 mt-0.5">{formatDate(dateStr)}</p>
+                <p className="text-xs font-medium text-stone-500 mt-0.5">{formatDate(dateStr)}</p>
               </div>
               {totalItems > 0 && (
                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.badge}`}>
@@ -87,10 +90,10 @@ export default function WeeklyBoard({ goals, weekNumber, year, onAdd, onToggle, 
             </div>
 
             {/* Divider */}
-            <div className={`mx-4 border-t ${c.border}`} />
+            <div className={`mx-5 border-t ${c.border}`} />
 
             {/* Goals + Google events (no time shown) */}
-            <ul className="flex-1 flex flex-col gap-1 px-4 py-3 min-h-[80px]">
+            <ul className="flex-1 flex flex-col gap-1.5 px-5 py-3 min-h-[90px]">
               {totalItems === 0 && (
                 <li className="text-xs text-stone-400 italic py-1">No tasks — add one below</li>
               )}
@@ -135,7 +138,7 @@ export default function WeeklyBoard({ goals, weekNumber, year, onAdd, onToggle, 
             {/* Add input */}
             <form
               onSubmit={e => handleAdd(e, day)}
-              className={`flex items-center gap-2 border-t ${c.border} px-4 py-2.5`}
+              className={`flex items-center gap-2 border-t-2 ${c.border} px-5 py-3`}
             >
               <svg className="h-3.5 w-3.5 shrink-0 text-stone-400" fill="none" viewBox="0 0 16 16">
                 <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

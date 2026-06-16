@@ -7,6 +7,13 @@ export interface User {
   createdAt: string;
 }
 
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  relationship: string;
+  phone: string;
+}
+
 export interface Family {
   id: string;
   name: string;
@@ -14,6 +21,8 @@ export interface Family {
   memberIds: string[];
   createdBy: string;
   createdAt: string;
+  photoUrl?: string | null;
+  emergencyContacts?: string | null; // JSON-encoded EmergencyContact[]
 }
 
 export interface TodoItem {

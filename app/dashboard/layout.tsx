@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!ready || !user) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-red-700 border-t-transparent" />
       </div>
     );
   }
@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar user={user} />
-      <main className="flex-1 mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         {children}
       </main>
     </div>

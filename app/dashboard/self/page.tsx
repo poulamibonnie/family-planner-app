@@ -140,10 +140,10 @@ export default function SelfPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-stone-900">
+          <h1 className="text-3xl font-bold text-stone-900 leading-tight">
             {greeting()}, {user.name.split(' ')[0]} 🌸
           </h1>
-          <p className="mt-1 text-sm text-stone-500">{formatDisplayDate(today)}</p>
+          <p className="mt-1.5 text-sm text-stone-500 font-medium">{formatDisplayDate(today)}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           {/* Google sync button */}
@@ -178,28 +178,30 @@ export default function SelfPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl bg-stone-100 p-1 overflow-x-auto">
+      <div className="flex gap-1.5 rounded-xl bg-stone-100 p-1.5 overflow-x-auto">
         {TABS.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex flex-1 min-w-max items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-              tab === t.key ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+            className={`flex flex-1 min-w-max items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
+              tab === t.key
+                ? 'bg-white text-red-800 shadow-sm ring-1 ring-red-200'
+                : 'text-stone-500 hover:text-stone-700 hover:bg-white/70'
             }`}
           >
-            <span>{t.emoji}</span>
+            <span className="text-base">{t.emoji}</span>
             <span>{t.label}</span>
           </button>
         ))}
       </div>
 
       {/* Content */}
-      <div className="rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
 
         {tab === 'today' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-stone-800">Today&apos;s Tasks</h2>
+              <h2 className="text-xl font-bold text-stone-800">Today&apos;s Tasks</h2>
               <span className="rounded-full bg-red-50 border border-red-100 px-3 py-1 text-xs font-medium text-red-700">Week {week}</span>
             </div>
 
@@ -263,7 +265,7 @@ export default function SelfPage() {
                     }
 
                     return (
-                      <li key={item.data.id} className="group flex items-center gap-3 rounded-xl border border-stone-100 bg-white px-4 py-3 shadow-sm transition hover:border-red-100">
+                      <li key={item.data.id} className="group flex items-center gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3.5 shadow-sm transition hover:border-red-200 hover:shadow-md">
                         {/* Completion checkbox */}
                         <input
                           type="checkbox"
@@ -341,7 +343,7 @@ export default function SelfPage() {
             {/* Week's Tasks */}
             <div>
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-stone-800">Week&apos;s Tasks</h2>
+                <h2 className="text-xl font-bold text-stone-800">Week&apos;s Tasks</h2>
                 <span className="rounded-full bg-rose-50 border border-rose-100 px-3 py-1 text-xs font-medium text-rose-700">Week {week} · {year}</span>
               </div>
               <WeeklyBoard
@@ -362,7 +364,7 @@ export default function SelfPage() {
                   onClick={() => setShareOpen(o => !o)}
                   className="flex w-full items-center justify-between px-6 py-4 text-left hover:bg-stone-50 transition"
                 >
-                  <h2 className="text-lg font-semibold text-stone-800">Share with family</h2>
+                  <h2 className="text-xl font-bold text-stone-800">Share with family</h2>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
                       {weeklyGoals.length + weekGoogleEvents.length} task{weeklyGoals.length + weekGoogleEvents.length !== 1 ? 's' : ''}
@@ -453,7 +455,7 @@ export default function SelfPage() {
         {tab === 'yearly' && (
           <div>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-stone-800">Yearly Goals</h2>
+              <h2 className="text-xl font-bold text-stone-800">Yearly Goals</h2>
               <span className="rounded-full bg-amber-50 border border-amber-100 px-3 py-1 text-xs font-medium text-amber-700">{year}</span>
             </div>
             <GoalList
@@ -468,7 +470,7 @@ export default function SelfPage() {
         {tab === 'reminders' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">Reminders</h2>
+              <h2 className="text-xl font-bold text-stone-800">Reminders</h2>
               <p className="text-sm text-stone-500 mt-1">Set reminders with browser notifications and email alerts</p>
             </div>
             <Reminders events={localEvents} userId={user.id} scope="self" onRefresh={load} />
@@ -478,7 +480,7 @@ export default function SelfPage() {
         {tab === 'progress' && (
           <div>
             <div className="mb-5">
-              <h2 className="text-lg font-semibold text-stone-800">Progress</h2>
+              <h2 className="text-xl font-bold text-stone-800">Progress</h2>
               <p className="text-sm text-stone-500 mt-1">Track completed and pending tasks across all time periods</p>
             </div>
             <ProgressStats todos={allTodos} weeklyGoals={allWeeklyGoals} yearlyGoals={yearlyGoals} />

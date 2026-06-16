@@ -10,12 +10,14 @@ export const users = sqliteTable('users', {
 });
 
 export const families = sqliteTable('families', {
-  id:        text('id').primaryKey(),
-  name:      text('name').notNull(),
-  code:      text('code').notNull().unique(),
-  memberIds: text('member_ids').notNull(), // JSON array
-  createdBy: text('created_by').notNull(),
-  createdAt: text('created_at').notNull(),
+  id:                 text('id').primaryKey(),
+  name:               text('name').notNull(),
+  code:               text('code').notNull().unique(),
+  memberIds:          text('member_ids').notNull(), // JSON array
+  createdBy:          text('created_by').notNull(),
+  createdAt:          text('created_at').notNull(),
+  photoUrl:           text('photo_url'),
+  emergencyContacts:  text('emergency_contacts'), // JSON array of {id,name,relationship,phone}
 });
 
 export const todos = sqliteTable('todos', {

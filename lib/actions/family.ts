@@ -59,6 +59,14 @@ export async function getFamilyMembers(familyId: string): Promise<User[]> {
   return rows as User[];
 }
 
+export async function updateFamilyPhoto(familyId: string, photoUrl: string | null): Promise<void> {
+  await db.update(families).set({ photoUrl }).where(eq(families.id, familyId));
+}
+
+export async function updateFamilyEmergencyContacts(familyId: string, contacts: string): Promise<void> {
+  await db.update(families).set({ emergencyContacts: contacts }).where(eq(families.id, familyId));
+}
+
 export async function updateUser(id: string, updates: { familyId?: string | null; name?: string }): Promise<void> {
   const set: Partial<{ familyId: string | null; name: string }> = {};
   if ('familyId' in updates) set.familyId = updates.familyId ?? null;
