@@ -70,6 +70,7 @@ export default function SelfPage() {
   }, [user, today, week, year]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (tab === 'progress') load(); }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (googleStatus === 'connected') {
@@ -336,7 +337,7 @@ export default function SelfPage() {
                             item.kind === 'todo'
                               ? await toggleTodo(item.data.id)
                               : await toggleCalendarEvent(item.data.id);
-                            load();
+                            await load();
                           }}
                           className="h-4 w-4 shrink-0 cursor-pointer rounded accent-red-600"
                         />
@@ -410,11 +411,11 @@ export default function SelfPage() {
               </div>
               <WeeklyBoard
                 goals={weeklyGoals} weekNumber={week} year={year}
-                onAdd={async (text, day) => { await addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'self' }); load(); }}
-                onToggle={async id => { await toggleGoal(id); load(); }}
-                onDelete={async id => { await deleteGoal(id); load(); }}
+                onAdd={async (text, day) => { await addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'self' }); await load(); }}
+                onToggle={async id => { await toggleGoal(id); await load(); }}
+                onDelete={async id => { await deleteGoal(id); await load(); }}
                 googleEvents={weekGoogleEvents}
-                onGoogleToggle={async id => { await toggleCalendarEvent(id); load(); }}
+                onGoogleToggle={async id => { await toggleCalendarEvent(id); await load(); }}
               />
             </div>
 
@@ -429,9 +430,9 @@ export default function SelfPage() {
             </div>
             <GoalList
               items={yearlyGoals} title={`Goals for ${year}`} accentColor="amber"
-              onAdd={async text => { await addGoal({ text, completed: false, type: 'yearly', year, userId: user.id, scope: 'self' }); load(); }}
-              onToggle={async id => { await toggleGoal(id); load(); }}
-              onDelete={async id => { await deleteGoal(id); load(); }}
+              onAdd={async text => { await addGoal({ text, completed: false, type: 'yearly', year, userId: user.id, scope: 'self' }); await load(); }}
+              onToggle={async id => { await toggleGoal(id); await load(); }}
+              onDelete={async id => { await deleteGoal(id); await load(); }}
             />
           </div>
         )}
