@@ -73,7 +73,7 @@ export default function SelfPage() {
 
   useEffect(() => {
     if (googleStatus === 'connected') {
-      showBanner('success', 'Google Calendar connected! Click "Sync Google Cal" to import your events.');
+      showBanner('success', 'Google Calendar connected! Click "📅 Calendar" to refresh your events.');
     } else if (googleStatus === 'error') {
       showBanner('error', 'Google Calendar connection failed. Please try again.');
     }
@@ -154,13 +154,7 @@ export default function SelfPage() {
                   disabled={isSyncing}
                   className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 shadow-sm transition hover:bg-stone-50 disabled:opacity-60"
                 >
-                  {isSyncing ? (
-                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-stone-400 border-t-transparent" />
-                  ) : (
-                    <GoogleIcon />
-                  )}
-                  {isSyncing ? 'Syncing…' : 'Sync Google Cal'}
-                  {!isSyncing && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                  {isSyncing ? '⏳ Syncing…' : 'Google Calendar 🗓️'}
                 </button>
               </>
             ) : (
