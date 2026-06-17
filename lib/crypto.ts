@@ -1,8 +1,13 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
-const KEY = Buffer.from(process.env.TOKEN_ENC_KEY!, 'hex');
+function getKey(): Buffer {
+  const hex = process.env.TOKEN_ENC_KEY;
+  if (!hex) throw new Error('TOKEN_ENC_KEY is not set');
+  return Buffer.from(hex, 'hex');
+}
 
 export function encrypt(plaintext: string): string {
+  const KEY = getKey();
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', KEY, iv);
   const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
@@ -11,6 +16,7 @@ export function encrypt(plaintext: string): string {
 }
 
 export function decrypt(ciphertext: string): string {
+  const KEY = getKey();
   const [ivHex, tagHex, encHex] = ciphertext.split(':');
   const iv = Buffer.from(ivHex, 'hex');
   const tag = Buffer.from(tagHex, 'hex');
