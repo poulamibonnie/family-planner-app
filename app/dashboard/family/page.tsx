@@ -426,6 +426,7 @@ export default function FamilyPage() {
             </div>
             <ShoppingList
               items={shopping}
+              userName={user.name}
               onAdd={async (text, qty) => { await addShoppingItem({ text, quantity: qty, completed: false, addedBy: user.id, addedByName: user.name, familyId: family.id }); load(); }}
               onToggle={async id => { await toggleShoppingItem(id); load(); }}
               onDelete={async id => { await deleteShoppingItem(id); load(); }}

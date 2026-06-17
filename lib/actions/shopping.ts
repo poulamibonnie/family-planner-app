@@ -3,7 +3,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
 import { shoppingItems } from '../schema';
-import { generateId } from '../utils';
+import { generateId, getWeekNumber, getYear } from '../utils';
 import type { ShoppingItem } from '../types';
 
 export async function addShoppingItem(data: Omit<ShoppingItem, 'id' | 'createdAt'>): Promise<ShoppingItem> {
@@ -24,4 +24,47 @@ export async function deleteShoppingItem(id: string): Promise<void> {
 export async function getFamilyShoppingItems(familyId: string): Promise<ShoppingItem[]> {
   const rows = await db.select().from(shoppingItems).where(eq(shoppingItems.familyId, familyId));
   return rows as ShoppingItem[];
+}
+
+export async function sendShoppingListEmail(
+  toEmails: string[],
+  pendingItems: Pick<ShoppingItem, 'text' | 'quantity'>[],
+  userName: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return { ok: false, error: 'Email service not configured.' };
+
+  const week = getWeekNumber();
+  const year = getYear();
+  const firstName = userName.split(' ')[0];
+  const subject = `🛒 Shopping List · Week ${week} · ${year}`;
+  const count = pendingItems.length;
+  const separator = '──────────────────';
+  const lines = pendingItems.map(i => `☐ ${i.text}${i.quantity ? ` (${i.quantity})` : ''}`).join('\n');
+  const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const textContent = `Hi ${firstName},\n\nHere's your shopping list for this week.\n\nItems (${count})\n${separator}\n${lines}\n${separator}\n\nGenerated on ${date}\n\nFamily Planner\nHelping families stay organized`;
+
+  try {
+    const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: 'Family Planner', email: 'familyplanner.notify@gmail.com' },
+        to: toEmails.map(email => ({ email })),
+        subject,
+        textContent,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, error: (err as { message?: string }).message ?? `HTTP ${res.status}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Failed to send email.' };
+  }
 }

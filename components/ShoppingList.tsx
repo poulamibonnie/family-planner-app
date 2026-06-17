@@ -2,17 +2,41 @@
 
 import { useState } from 'react';
 import type { ShoppingItem } from '@/lib/types';
+import { sendShoppingListEmail } from '@/lib/actions/shopping';
 
 interface Props {
   items: ShoppingItem[];
+  userName: string;
   onAdd: (text: string, quantity: string) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
 }
 
-export default function ShoppingList({ items, onAdd, onToggle, onDelete }: Props) {
+export default function ShoppingList({ items, userName, onAdd, onToggle, onDelete }: Props) {
   const [text, setText] = useState('');
   const [qty, setQty] = useState('');
+  const [keepOpen, setKeepOpen] = useState(false);
+  const [exportEmail, setExportEmail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<'sent' | 'error' | null>(null);
+  const [sendError, setSendError] = useState('');
+
+  const emailList = exportEmail.split(',').map(e => e.trim()).filter(Boolean);
+
+  async function handleExport() {
+    if (emailList.length === 0 || pending.length === 0) return;
+    setSending(true);
+    setSendResult(null);
+    const result = await sendShoppingListEmail(emailList, pending.map(i => ({ text: i.text, quantity: i.quantity })), userName);
+    setSending(false);
+    if (result.ok) {
+      setSendResult('sent');
+      setTimeout(() => setSendResult(null), 4000);
+    } else {
+      setSendResult('error');
+      setSendError(result.error);
+    }
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +123,59 @@ export default function ShoppingList({ items, onAdd, onToggle, onDelete }: Props
           <p className="text-sm">Shopping list is empty</p>
         </div>
       )}
+
+      {/* Export to Google Keep */}
+      <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <button
+          onClick={() => setKeepOpen(o => !o)}
+          className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium text-stone-700 hover:bg-stone-50 transition"
+        >
+          <span className="flex items-center gap-2">
+            <span>📝</span>
+            Export to Google Keep
+          </span>
+          <svg
+            className={`h-4 w-4 text-stone-400 transition-transform duration-200 ${keepOpen ? 'rotate-180' : ''}`}
+            viewBox="0 0 16 16" fill="none"
+          >
+            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {keepOpen && (
+          <div className="border-t border-stone-100 px-4 py-4 space-y-3">
+            <p className="text-xs text-stone-500">
+              Sends the pending shopping items as a checklist email. Copy the email body into Google Keep to create a checklist note.
+            </p>
+            <input
+              type="text"
+              value={exportEmail}
+              onChange={e => { setExportEmail(e.target.value); setSendResult(null); }}
+              placeholder="email1@gmail.com, email2@gmail.com"
+              className="w-full rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-800 placeholder-stone-400 shadow-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            />
+            {emailList.length > 1 && (
+              <p className="text-xs text-stone-400">{emailList.length} recipients</p>
+            )}
+            {pending.length === 0 && (
+              <p className="text-xs text-emerald-700 font-medium">Nothing left to buy 🎉</p>
+            )}
+            {sendResult === 'sent' && (
+              <p className="text-xs text-emerald-700 font-medium">✓ Email sent to {emailList.join(', ')}</p>
+            )}
+            {sendResult === 'error' && (
+              <p className="text-xs text-red-600 font-medium">Failed to send: {sendError}</p>
+            )}
+            <button
+              disabled={emailList.length === 0 || pending.length === 0 || sending}
+              onClick={handleExport}
+              className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-800 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {sending ? 'Sending…' : `Export${pending.length > 0 ? ` (${pending.length} items)` : ''}`}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
