@@ -132,7 +132,7 @@ export default function ShoppingList({ items, userName, onAdd, onToggle, onDelet
         >
           <span className="flex items-center gap-2">
             <span>📝</span>
-            Export to Google Keep
+            Mail the shopping list
           </span>
           <svg
             className={`h-4 w-4 text-stone-400 transition-transform duration-200 ${keepOpen ? 'rotate-180' : ''}`}
@@ -145,7 +145,7 @@ export default function ShoppingList({ items, userName, onAdd, onToggle, onDelet
         {keepOpen && (
           <div className="border-t border-stone-100 px-4 py-4 space-y-3">
             <p className="text-xs text-stone-500">
-              Sends the pending shopping items as a checklist email. Copy the email body into Google Keep to create a checklist note.
+              Sends the pending shopping items as a checklist email to the recipients you specify.
             </p>
             <input
               type="text"
