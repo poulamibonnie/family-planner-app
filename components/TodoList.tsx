@@ -21,71 +21,117 @@ export default function TodoList({ items, onAdd, onToggle, onDelete, placeholder
     setText('');
   }
 
-  const done = items.filter(i => i.completed).length;
+  const done    = items.filter(i => i.completed).length;
+  const pending = items.filter(i => !i.completed);
+  const checked = items.filter(i => i.completed);
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      {/* Add form */}
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white px-4 py-3"
+        style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+      >
+        <div
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white text-sm font-bold"
+          style={{ background: '#7C5CFC' }}
+        >
+          +
+        </div>
         <input
           value={text}
           onChange={e => setText(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm text-stone-800 placeholder-stone-400 shadow-sm outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+          className="flex-1 bg-transparent text-sm text-stone-800 placeholder-stone-400 outline-none"
         />
         <button
           type="submit"
-          className="rounded-xl px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 active:scale-95"
-          style={{ background: 'linear-gradient(135deg, #606C5A, #4a5545)' }}
+          disabled={!text.trim()}
+          className="shrink-0 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all duration-200 active:scale-95 disabled:opacity-40"
+          style={{ background: '#7C5CFC' }}
         >
           Add
         </button>
       </form>
 
+      {/* Progress */}
       {items.length > 0 && (
-        <p className="text-xs text-stone-500">
-          {done}/{items.length} completed
+        <p className="text-xs font-medium text-stone-400">
+          <span className="text-stone-600 font-semibold">{done}</span> of {items.length} completed
         </p>
       )}
 
-      <ul className="space-y-2">
-        {items.map(item => (
-          <li
-            key={item.id}
-            className="group flex items-center gap-3 rounded-xl border border-stone-100 bg-white px-4 py-3 shadow-sm transition hover:border-red-100"
-          >
-            <button
-              onClick={() => onToggle(item.id)}
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
-                item.completed
-                  ? 'border-red-700 bg-red-700'
-                  : 'border-stone-300 hover:border-red-400'
-              }`}
+      {/* Pending items */}
+      {pending.length > 0 && (
+        <ul className="space-y-2">
+          {pending.map(item => (
+            <li
+              key={item.id}
+              className="group flex items-center gap-3 rounded-2xl border border-stone-100 bg-white px-4 py-3.5 transition-all duration-200 hover:shadow-sm hover:border-stone-200"
+              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
             >
-              {item.completed && (
-                <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <button
+                onClick={() => onToggle(item.id)}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200 hover:scale-110"
+                style={{ borderColor: '#D1D5DB' }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#7C5CFC')}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = '#D1D5DB')}
+              />
+              <span className="flex-1 text-sm text-stone-700">{item.text}</span>
+              <button
+                onClick={() => onDelete(item.id)}
+                className="hidden shrink-0 text-stone-300 transition hover:text-rose-400 group-hover:block"
+                aria-label="Delete"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
-              )}
-            </button>
-            <span className={`flex-1 text-sm ${item.completed ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-              {item.text}
-            </span>
-            <button
-              onClick={() => onDelete(item.id)}
-              className="hidden text-stone-300 transition hover:text-red-400 group-hover:block"
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Checked items */}
+      {checked.length > 0 && (
+        <ul className="space-y-2 opacity-60">
+          {checked.map(item => (
+            <li
+              key={item.id}
+              className="group flex items-center gap-3 rounded-2xl border border-stone-100 bg-white px-4 py-3.5 transition-all duration-200"
             >
-              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
-                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-          </li>
-        ))}
-      </ul>
+              <button
+                onClick={() => onToggle(item.id)}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200"
+                style={{ borderColor: '#22C55E', background: '#22C55E' }}
+              >
+                <svg className="h-3 w-3 text-white" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <span className="flex-1 text-sm text-stone-400 line-through">{item.text}</span>
+              <button
+                onClick={() => onDelete(item.id)}
+                className="hidden shrink-0 text-stone-300 transition hover:text-rose-400 group-hover:block"
+                aria-label="Delete"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {items.length === 0 && (
-        <div className="flex flex-col items-center py-10 text-stone-400">
-          <span className="mb-2 text-4xl opacity-40">🗒️</span>
-          <p className="text-sm">No tasks yet — add one above</p>
+        <div className="flex flex-col items-center py-12 text-stone-300">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl text-2xl" style={{ background: '#F5F0FF' }}>
+            🗒️
+          </div>
+          <p className="text-sm font-medium text-stone-400">No tasks yet</p>
+          <p className="text-xs text-stone-300 mt-1">Add one above to get started</p>
         </div>
       )}
     </div>

@@ -5,14 +5,14 @@ import type { Goal, DayOfWeek, CalendarEvent } from '@/lib/types';
 
 const DAYS: DayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const COLORS: Record<DayOfWeek, { bg: string; border: string; title: string; badge: string; ring: string; check: string }> = {
-  Mon: { bg: 'bg-red-50',     border: 'border-red-200',     title: 'text-red-800',     badge: 'bg-red-100 text-red-700',     ring: 'ring-red-400',     check: 'accent-red-600' },
-  Tue: { bg: 'bg-amber-50',   border: 'border-amber-200',   title: 'text-amber-800',   badge: 'bg-amber-100 text-amber-700',   ring: 'ring-amber-400',   check: 'accent-amber-600' },
-  Wed: { bg: 'bg-emerald-50', border: 'border-emerald-200', title: 'text-emerald-800', badge: 'bg-emerald-100 text-emerald-700', ring: 'ring-emerald-400', check: 'accent-emerald-600' },
-  Thu: { bg: 'bg-stone-50',   border: 'border-stone-200',   title: 'text-stone-700',   badge: 'bg-stone-100 text-stone-600',   ring: 'ring-stone-400',   check: 'accent-stone-600' },
-  Fri: { bg: 'bg-zinc-50',    border: 'border-zinc-200',    title: 'text-zinc-800',    badge: 'bg-zinc-100 text-zinc-700',    ring: 'ring-zinc-400',    check: 'accent-zinc-600' },
-  Sat: { bg: 'bg-rose-50',    border: 'border-rose-200',    title: 'text-rose-800',    badge: 'bg-rose-100 text-rose-700',    ring: 'ring-rose-400',    check: 'accent-rose-600' },
-  Sun: { bg: 'bg-slate-50',   border: 'border-slate-200',   title: 'text-slate-700',   badge: 'bg-slate-100 text-slate-600',   ring: 'ring-slate-400',   check: 'accent-slate-600' },
+const DAY_ACCENT: Record<DayOfWeek, { color: string; headerBg: string; label: string; checkColor: string }> = {
+  Mon: { color: '#7C5CFC', headerBg: '#F5F0FF', label: 'Monday',    checkColor: 'accent-violet-600' },
+  Tue: { color: '#F59E0B', headerBg: '#FFFBEB', label: 'Tuesday',   checkColor: 'accent-amber-600'  },
+  Wed: { color: '#06B6D4', headerBg: '#ECFEFF', label: 'Wednesday', checkColor: 'accent-cyan-600'   },
+  Thu: { color: '#10B981', headerBg: '#ECFDF5', label: 'Thursday',  checkColor: 'accent-emerald-600'},
+  Fri: { color: '#F43F5E', headerBg: '#FFF1F2', label: 'Friday',    checkColor: 'accent-rose-600'   },
+  Sat: { color: '#8B5CF6', headerBg: '#F5F3FF', label: 'Saturday',  checkColor: 'accent-purple-600' },
+  Sun: { color: '#F97316', headerBg: '#FFF7ED', label: 'Sunday',    checkColor: 'accent-orange-600' },
 };
 
 interface Props {
@@ -43,78 +43,88 @@ export default function WeeklyBoard({ goals, weekNumber, year, onAdd, onToggle, 
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
       {DAYS.map(day => {
-        const c = COLORS[day];
+        const a       = DAY_ACCENT[day];
         const dateStr = weekDates[day];
         const isToday = dateStr === today;
-        const dayGoals = goals.filter(g => g.day === day);
+
+        const dayGoals  = goals.filter(g => g.day === day);
         const dayGoogle = googleEvents.filter(e => e.date === dateStr);
-        const totalItems = dayGoals.length + dayGoogle.length;
-        const done = dayGoals.filter(g => g.completed).length + dayGoogle.filter(e => !!e.completed).length;
+        const total     = dayGoals.length + dayGoogle.length;
+        const done      = dayGoals.filter(g => g.completed).length + dayGoogle.filter(e => !!e.completed).length;
 
         type DayItem = { kind: 'goal'; data: Goal } | { kind: 'google'; data: CalendarEvent };
         const dayItems: DayItem[] = [
-          ...dayGoals.map(g => ({ kind: 'goal' as const, data: g })),
+          ...dayGoals.map(g  => ({ kind: 'goal'   as const, data: g })),
           ...dayGoogle.map(e => ({ kind: 'google' as const, data: e })),
         ].sort((a, b) => Number(!!a.data.completed) - Number(!!b.data.completed));
 
         return (
           <div
             key={day}
-            className={`group flex flex-col rounded-2xl border-2 ${c.border} ${c.bg} shadow-sm transition-all duration-200 hover:shadow-md ${
-              isToday ? `ring-2 ring-offset-2 ${c.ring}` : ''
-            }`}
+            className="flex flex-col rounded-2xl bg-white transition-all duration-200 hover:shadow-md"
+            style={{
+              border: '1px solid #E4E4E7',
+              borderLeft: `4px solid ${a.color}`,
+              boxShadow: isToday
+                ? `0 0 0 2px ${a.color}40, 0 2px 8px rgba(0,0,0,0.06)`
+                : '0 1px 4px rgba(0,0,0,0.04)',
+            }}
           >
             {/* Card header */}
-            <div className="flex items-start justify-between px-5 pt-5 pb-3">
+            <div
+              className="flex items-start justify-between px-4 pt-4 pb-3 rounded-t-xl"
+              style={{ background: a.headerBg }}
+            >
               <div>
                 <div className="flex items-center gap-2">
-                  <p className={`text-base font-bold ${c.title}`}>{day}</p>
+                  <p className="text-sm font-bold" style={{ color: a.color }}>{day}</p>
                   {isToday && (
                     <span
                       className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white leading-none"
-                      style={{ background: '#E07A5F' }}
+                      style={{ background: a.color }}
                     >
                       Today
                     </span>
                   )}
                 </div>
-                <p className="text-xs font-medium text-stone-500 mt-0.5">{formatDate(dateStr)}</p>
+                <p className="text-xs text-stone-400 mt-0.5 font-medium">{formatDate(dateStr)}</p>
               </div>
-              {totalItems > 0 && (
-                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${c.badge}`}>
-                  {done}/{totalItems}
+              {total > 0 && (
+                <span
+                  className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  style={{ background: `${a.color}18`, color: a.color }}
+                >
+                  {done}/{total}
                 </span>
               )}
             </div>
 
-            {/* Divider */}
-            <div className={`mx-5 border-t ${c.border}`} />
-
-            {/* Goals + Google events (no time shown) */}
-            <ul className="flex-1 flex flex-col gap-1.5 px-5 py-3 min-h-[90px]">
-              {totalItems === 0 && (
-                <li className="text-xs text-stone-400 italic py-1">No tasks — add one below</li>
+            {/* Task list */}
+            <ul className="flex-1 flex flex-col gap-1.5 px-4 py-3 min-h-[88px]">
+              {total === 0 && (
+                <li className="text-xs text-stone-300 italic py-1.5">No tasks yet</li>
               )}
               {dayItems.map(item =>
                 item.kind === 'goal' ? (
-                  <li key={item.data.id} className="group flex items-start gap-2">
+                  <li key={item.data.id} className="group/item flex items-start gap-2">
                     <input
                       type="checkbox"
                       checked={item.data.completed}
                       onChange={() => onToggle(item.data.id)}
-                      className={`mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded ${c.check}`}
+                      className={`mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded ${a.checkColor}`}
                     />
-                    <span className={`flex-1 text-sm leading-snug break-words ${item.data.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>
+                    <span className={`flex-1 text-sm leading-snug break-words ${item.data.completed ? 'line-through text-stone-300' : 'text-stone-700'}`}>
                       {item.data.text}
                     </span>
                     <button
                       onClick={() => onDelete(item.data.id)}
-                      className="hidden shrink-0 text-stone-300 hover:text-red-500 group-hover:block transition mt-0.5"
+                      className="hidden shrink-0 text-stone-300 hover:text-rose-400 group-hover/item:block transition mt-0.5"
+                      aria-label="Delete"
                     >
                       <svg className="h-3.5 w-3.5" viewBox="0 0 12 12" fill="none">
-                        <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                     </button>
                   </li>
@@ -124,9 +134,9 @@ export default function WeeklyBoard({ goals, weekNumber, year, onAdd, onToggle, 
                       type="checkbox"
                       checked={!!item.data.completed}
                       onChange={() => onGoogleToggle?.(item.data.id)}
-                      className={`mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded ${c.check}`}
+                      className={`mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded ${a.checkColor}`}
                     />
-                    <span className={`flex-1 text-sm leading-snug break-words ${item.data.completed ? 'line-through text-stone-400' : 'text-stone-700'}`}>
+                    <span className={`flex-1 text-sm leading-snug break-words ${item.data.completed ? 'line-through text-stone-300' : 'text-stone-700'}`}>
                       {item.data.title}
                     </span>
                     <GoogleIcon />
@@ -138,21 +148,22 @@ export default function WeeklyBoard({ goals, weekNumber, year, onAdd, onToggle, 
             {/* Add input */}
             <form
               onSubmit={e => handleAdd(e, day)}
-              className={`flex items-center gap-2 border-t-2 ${c.border} px-5 py-3`}
+              className="flex items-center gap-2 border-t border-stone-100 px-4 py-3"
             >
-              <svg className="h-3.5 w-3.5 shrink-0 text-stone-400" fill="none" viewBox="0 0 16 16">
-                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <svg className="h-3.5 w-3.5 shrink-0 text-stone-300" fill="none" viewBox="0 0 16 16">
+                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
               <input
                 value={inputs[day]}
                 onChange={e => setInputs(prev => ({ ...prev, [day]: e.target.value }))}
                 placeholder="Add a task…"
-                className="flex-1 bg-transparent text-xs text-stone-700 placeholder-stone-400 outline-none"
+                className="flex-1 bg-transparent text-xs text-stone-600 placeholder-stone-300 outline-none"
               />
               {inputs[day].trim() && (
                 <button
                   type="submit"
-                  className={`shrink-0 text-xs font-semibold ${c.title} hover:opacity-70 transition`}
+                  className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white transition"
+                  style={{ background: a.color }}
                 >
                   Add
                 </button>
@@ -177,10 +188,9 @@ function GoogleIcon() {
 }
 
 function getWeekDates(weekNumber: number, year: number): Record<DayOfWeek, string> {
-  const jan4 = new Date(year, 0, 4);
+  const jan4   = new Date(year, 0, 4);
   const monday = new Date(jan4);
   monday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7) + (weekNumber - 1) * 7);
-
   const result = {} as Record<DayOfWeek, string>;
   DAYS.forEach((day, i) => {
     const d = new Date(monday);

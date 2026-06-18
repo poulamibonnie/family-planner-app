@@ -1,6 +1,6 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { shoppingItems } from '../schema';
 import { generateId, getWeekNumber, getYear } from '../utils';
@@ -26,23 +26,32 @@ export async function getFamilyShoppingItems(familyId: string): Promise<Shopping
   return rows as ShoppingItem[];
 }
 
+export async function clearAllShoppingItems(familyId: string): Promise<void> {
+  await db.delete(shoppingItems).where(eq(shoppingItems.familyId, familyId));
+}
+
+export async function clearCompletedShoppingItems(familyId: string): Promise<void> {
+  await db.delete(shoppingItems).where(
+    and(eq(shoppingItems.familyId, familyId), eq(shoppingItems.completed, true))
+  );
+}
+
 export async function sendShoppingListEmail(
   toEmails: string[],
   pendingItems: Pick<ShoppingItem, 'text' | 'quantity'>[],
-  userName: string,
+  familyName: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return { ok: false, error: 'Email service not configured.' };
 
   const week = getWeekNumber();
   const year = getYear();
-  const firstName = userName.split(' ')[0];
   const subject = `🛒 Shopping List · Week ${week} · ${year}`;
   const count = pendingItems.length;
   const separator = '──────────────────';
-  const lines = pendingItems.map(i => `☐ ${i.text}${i.quantity ? ` (${i.quantity})` : ''}`).join('\n');
+  const lines = pendingItems.map((i, idx) => `    ${idx + 1}. ${i.text}${i.quantity ? ` (${i.quantity})` : ''}`).join('\n');
   const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const textContent = `Hi ${firstName},\n\nHere's your shopping list for this week.\n\nItems (${count})\n${separator}\n${lines}\n${separator}\n\nGenerated on ${date}\n\nFamily Planner\nHelping families stay organized`;
+  const textContent = `Hi ${familyName},\n\nHere's your shopping list for this week.\n\nItems (${count})\n${separator}\n${lines}\n${separator}\n\nGenerated on ${date}\n\nFamily Planner\nHelping families stay organized`;
 
   try {
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
