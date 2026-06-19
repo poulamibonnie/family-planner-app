@@ -602,10 +602,10 @@ export default function SelfPage() {
             onDelete={async id => { await deleteGoal(id); await load(); }}
             googleEvents={viewedWeekGoogleEvents}
             onGoogleToggle={async id => { await toggleCalendarEvent(id); await load(); }}
-            onQuickAdd={async text => {
-              const dayNames: DayOfWeek[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-              const todayDow = dayNames[new Date().getDay()];
-              await addGoal({ text, completed: false, type: 'weekly', weekNumber: viewWeek, year: viewYear, day: todayDow, userId: user.id, scope: 'self' });
+            onQuickAdd={async (text, days) => {
+              await Promise.all(
+                days.map(day => addGoal({ text, completed: false, type: 'weekly', weekNumber: viewWeek, year: viewYear, day, userId: user.id, scope: 'self' }))
+              );
               await load();
             }}
           />

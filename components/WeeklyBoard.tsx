@@ -24,7 +24,7 @@ interface Props {
   onDelete: (id: string) => void;
   googleEvents?: CalendarEvent[];
   onGoogleToggle?: (id: string) => void;
-  onQuickAdd?: (text: string) => void;
+  onQuickAdd?: (text: string, days: DayOfWeek[]) => void;
 }
 
 export default function WeeklyBoard({
@@ -36,6 +36,9 @@ export default function WeeklyBoard({
   });
   const [quickText, setQuickText] = useState('');
   const [quickAdding, setQuickAdding] = useState(false);
+  const [quickDays, setQuickDays] = useState<Set<DayOfWeek>>(
+    () => new Set([DAYS[(new Date().getDay() + 6) % 7]])
+  );
   const inputRefs = useRef<Partial<Record<DayOfWeek, HTMLInputElement | null>>>({});
 
   const weekDates = getWeekDates(weekNumber, year);
@@ -49,13 +52,26 @@ export default function WeeklyBoard({
     setInputs(prev => ({ ...prev, [day]: '' }));
   }
 
+  function toggleQuickDay(day: DayOfWeek) {
+    setQuickDays(prev => {
+      const next = new Set(prev);
+      if (next.has(day)) {
+        if (next.size === 1) return next; // keep at least one selected
+        next.delete(day);
+      } else {
+        next.add(day);
+      }
+      return next;
+    });
+  }
+
   async function handleQuickAdd(e: React.FormEvent) {
     e.preventDefault();
     const text = quickText.trim();
-    if (!text || !onQuickAdd || quickAdding) return;
+    if (!text || !onQuickAdd || quickAdding || quickDays.size === 0) return;
     setQuickAdding(true);
     try {
-      await onQuickAdd(text);
+      await onQuickAdd(text, Array.from(quickDays));
       setQuickText('');
     } finally {
       setQuickAdding(false);
@@ -297,8 +313,16 @@ export default function WeeklyBoard({
           className="rounded-2xl bg-white p-4"
           style={{ border: '1px solid #E4E4E7', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
         >
-          <p className="text-xs font-bold text-stone-700 mb-3">Quick Add</p>
-          <form onSubmit={handleQuickAdd} className="space-y-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold text-stone-700">Quick Add</p>
+            {quickDays.size > 1 && (
+              <span className="text-[10px] font-medium rounded-full px-2 py-0.5" style={{ background: '#F5F0FF', color: '#7C5CFC' }}>
+                Recurring · {quickDays.size} days
+              </span>
+            )}
+          </div>
+          <form onSubmit={handleQuickAdd} className="space-y-2.5">
+            {/* Task name input */}
             <div
               className="flex items-center gap-2 rounded-xl px-3 py-2"
               style={{ border: '1px solid #E4E4E7', background: '#FAFAFA' }}
@@ -306,21 +330,45 @@ export default function WeeklyBoard({
               <input
                 value={quickText}
                 onChange={e => setQuickText(e.target.value)}
-                placeholder="Add a task..."
+                placeholder="Task name..."
                 className="flex-1 bg-transparent text-xs text-stone-600 placeholder-stone-300 outline-none"
               />
-              <svg className="h-4 w-4 shrink-0 text-stone-300" fill="none" viewBox="0 0 16 16">
-                <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M5 6h6M5 10h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
             </div>
+
+            {/* Day-of-week toggles */}
+            <div className="flex items-center justify-between">
+              {DAYS.map(d => {
+                const sel = quickDays.has(d);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => toggleQuickDay(d)}
+                    title={DAY_ACCENT[d].label}
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-semibold transition-all"
+                    style={sel
+                      ? { background: DAY_ACCENT[d].color, color: '#fff' }
+                      : { background: '#F4F4F5', color: '#9CA3AF' }
+                    }
+                  >
+                    {d.slice(0, 2)}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Submit */}
             <button
               type="submit"
               disabled={!quickText.trim() || quickAdding}
-              className="w-full rounded-xl py-2 text-sm font-semibold text-white transition disabled:opacity-50"
+              className="w-full rounded-xl py-2 text-xs font-semibold text-white transition disabled:opacity-50"
               style={{ background: '#7C5CFC' }}
             >
-              {quickAdding ? 'Adding…' : 'Add Task'}
+              {quickAdding
+                ? 'Adding…'
+                : quickDays.size > 1
+                  ? `Add to ${quickDays.size} days`
+                  : 'Add Task'}
             </button>
           </form>
         </div>
