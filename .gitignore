@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local simulation/demo harness (not part of the shipped app)
+/app/simulate
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
