@@ -28,19 +28,17 @@ _Purpose: enough context to resume development cold. Update at the end of each w
 
 ## Current state / blockers
 
-- **Vercel deployment is the active task and not yet confirmed live.**
-  - The first prod deploy (`vercel deploy --prod`) **failed** during "Collecting page data": the Google callback route was statically evaluated with no Turso URL → `LibsqlError: URL_INVALID`. Fixed via `force-dynamic` (committed) and by adding env vars.
-  - **All 10 environment variables were added to the Vercel project (production scope)**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TOKEN_ENC_KEY`, `BREVO_SMTP_LOGIN`, `BREVO_SMTP_PASSWORD`, `BREVO_API_KEY`, `NEXT_PUBLIC_APP_URL`.
-  - ⚠️ `NEXT_PUBLIC_APP_URL` was set to a guessed production domain (`https://family-planner-app-flax.vercel.app`). **Verify the actual production domain** and correct this var if it differs — it drives the OAuth `redirect_uri`.
-  - The re-deploy after adding env vars was **interrupted/not completed** in the last session.
+- **Production domain:** `https://family-planner-app-buwf.vercel.app` (the clean `family-planner-app-buwf.vercel.app` alias → current `git-main` production deployment).
+- **Deployment is automatic via Vercel's Git integration.** Every push to `main` triggers a production deploy — do **not** run `vercel deploy --prod` manually. Latest production deploy is **Ready** and current.
+  - Earlier a build failed during "Collecting page data": the Google callback route was statically evaluated with no Turso URL → `LibsqlError: URL_INVALID`. Fixed via `force-dynamic` (committed) and by adding env vars; subsequent git-triggered deploys are green.
+  - **All 10 environment variables are set in the Vercel project (production scope)**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TOKEN_ENC_KEY`, `BREVO_SMTP_LOGIN`, `BREVO_SMTP_PASSWORD`, `BREVO_API_KEY`, `NEXT_PUBLIC_APP_URL`. New/changed env vars only take effect on the **next** deploy (a push, or the dashboard "Redeploy" button) — they do not apply retroactively. `NEXT_PUBLIC_APP_URL` in particular is inlined at build time.
+  - ✅ `NEXT_PUBLIC_APP_URL` corrected (via Vercel dashboard) to `https://family-planner-app-buwf.vercel.app`. (It had briefly been set to a guessed `flax` domain that didn't exist.) This drives the OAuth `redirect_uri`.
 
 ## Next tasks (in order)
 
-1. **Confirm the production domain** in Vercel, then ensure `NEXT_PUBLIC_APP_URL` matches it exactly (`vercel env`).
-2. **Re-run** `vercel deploy --prod` and confirm a successful build + reachable site.
-3. **Whitelist the production OAuth redirect URI** (`<prod-domain>/api/google/callback`) in the Google Cloud console, or Google login will fail in prod.
-4. **Smoke test in prod:** register/login, create a family, add todos/shopping items, send a shopping email, connect+sync Google Calendar.
-5. Address top tech debt when ready: **hash passwords** (ADR-008) and add **per-action authorization** to server actions.
+1. **Whitelist the production OAuth redirect URI** (`https://family-planner-app-buwf.vercel.app/api/google/callback`) in the Google Cloud console, or Google login will fail in prod.
+2. **Smoke test in prod:** register/login, create a family, add todos/shopping items, send a shopping email, connect+sync Google Calendar.
+3. Address top tech debt when ready: **hash passwords** (ADR-008) and add **per-action authorization** to server actions.
 
 ## Context needed to resume
 - Read `ARCHITECTURE.md` and `CODEBASE_MAP.md` first.
