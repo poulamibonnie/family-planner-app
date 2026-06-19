@@ -6,8 +6,9 @@ import { getFamilyAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/action
 import { getFamilyShoppingItems, addShoppingItem, toggleShoppingItem, deleteShoppingItem, clearAllShoppingItems, clearCompletedShoppingItems } from '@/lib/actions/shopping';
 import { getFamilyEvents, toggleCalendarEvent } from '@/lib/actions/events';
 import type { User, Family, TodoItem, ShoppingItem, CalendarEvent, EmergencyContact } from '@/lib/types';
-import { todayISO, getWeekNumber, getYear, DAYS, goalDayToISO, generateId } from '@/lib/utils';
+import { todayISO, getWeekNumber, getYear, generateId } from '@/lib/utils';
 import FamilyManager from '@/components/FamilyManager';
+import FamilyWeeklyBoard from '@/components/FamilyWeeklyBoard';
 import ShoppingList from '@/components/ShoppingList';
 import MealPlan from '@/components/MealPlan';
 import Reminders from '@/components/Reminders';
@@ -21,16 +22,6 @@ const TABS: { key: Tab; label: string; emoji: string }[] = [
   { key: 'meals',     label: 'Meal Plan', emoji: '🍽️' },
   { key: 'reminders', label: 'Reminders', emoji: '🔔' },
 ];
-
-const DAY_ACCENT: Record<string, { color: string; headerBg: string; checkColor: string }> = {
-  Mon: { color: '#7C5CFC', headerBg: '#F5F0FF', checkColor: 'accent-violet-600' },
-  Tue: { color: '#F59E0B', headerBg: '#FFFBEB', checkColor: 'accent-amber-600'  },
-  Wed: { color: '#06B6D4', headerBg: '#ECFEFF', checkColor: 'accent-cyan-600'   },
-  Thu: { color: '#10B981', headerBg: '#ECFDF5', checkColor: 'accent-emerald-600'},
-  Fri: { color: '#F43F5E', headerBg: '#FFF1F2', checkColor: 'accent-rose-600'   },
-  Sat: { color: '#8B5CF6', headerBg: '#F5F3FF', checkColor: 'accent-purple-600' },
-  Sun: { color: '#F97316', headerBg: '#FFF7ED', checkColor: 'accent-orange-600' },
-};
 
 function avatarInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -50,9 +41,9 @@ export default function FamilyPage() {
   const [allTodos,    setAllTodos]    = useState<TodoItem[]>([]);
   const [shopping,    setShopping]    = useState<ShoppingItem[]>([]);
   const [events,      setEvents]      = useState<CalendarEvent[]>([]);
-  const [taskInputs,  setTaskInputs]  = useState<Record<string, string>>({});
   const [members,     setMembers]     = useState<User[]>([]);
   const [codeCopied,  setCodeCopied]  = useState(false);
+  const [dismissedTip, setDismissedTip] = useState(false);
   const [contacts,      setContacts]      = useState<EmergencyContact[]>([]);
   const [addingContact, setAddingContact] = useState(false);
   const [contactForm,   setContactForm]   = useState({ name: '', relationship: '', phone: '' });
@@ -333,150 +324,31 @@ export default function FamilyPage() {
           TASKS TAB
       ══════════════════════════════════ */}
       {tab === 'tasks' && (
-        <div>
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-stone-900 tracking-tight">Shared Tasks</h2>
-              <p className="text-sm text-stone-400 mt-0.5">Collaborative week board for the whole family</p>
+        <div className="space-y-5">
+          <FamilyWeeklyBoard
+            allTodos={allTodos}
+            events={events}
+            onAdd={async (text, date) => { await addTodo({ text, completed: false, date, userId: user.id, scope: 'family', familyId: family.id }); load(); }}
+            onToggle={async id => { await toggleTodo(id); load(); }}
+            onDelete={async id => { await deleteTodo(id); load(); }}
+            onGoogleToggle={async id => { await toggleCalendarEvent(id); load(); }}
+            onQuickAdd={async (text, dates) => { await Promise.all(dates.map(date => addTodo({ text, completed: false, date, userId: user.id, scope: 'family', familyId: family.id }))); load(); }}
+          />
+          {!dismissedTip && (
+            <div className="flex items-center gap-3 rounded-2xl border border-stone-100 bg-white px-4 py-3 text-sm text-stone-500 shadow-sm">
+              <span className="shrink-0">💡</span>
+              <span><strong className="font-semibold text-stone-700">Tip:</strong> Click the day cards to add tasks, or use Quick Add in the sidebar</span>
+              <button
+                onClick={() => setDismissedTip(true)}
+                className="ml-auto shrink-0 text-stone-300 transition hover:text-stone-500"
+                aria-label="Dismiss"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
             </div>
-            <span
-              className="rounded-full px-3 py-1 text-xs font-semibold"
-              style={{ background: '#F5F0FF', color: '#7C5CFC', border: '1px solid #D9C8FF' }}
-            >
-              Week {week} · {year}
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {(DAYS as string[]).map(day => {
-              const a       = DAY_ACCENT[day] ?? DAY_ACCENT.Mon;
-              const dateStr = goalDayToISO(week, year, day);
-              const isToday = dateStr === today;
-              const dayTodos  = allTodos.filter(t => t.date === dateStr);
-              const dayEvents = events.filter(e => e.date === dateStr && e.source === 'google');
-              const total     = dayTodos.length + dayEvents.length;
-              const done      = dayTodos.filter(t => t.completed).length + dayEvents.filter(e => !!e.completed).length;
-
-              type DayItem = { kind: 'todo'; data: TodoItem } | { kind: 'google'; data: CalendarEvent };
-              const merged: DayItem[] = [
-                ...dayTodos.map(t  => ({ kind: 'todo'   as const, data: t })),
-                ...dayEvents.map(e => ({ kind: 'google' as const, data: e })),
-              ].sort((a, b) => Number(!!a.data.completed) - Number(!!b.data.completed));
-
-              return (
-                <div
-                  key={day}
-                  className="flex flex-col rounded-2xl bg-white transition-all duration-200 hover:shadow-md"
-                  style={{
-                    border: '1px solid #E4E4E7',
-                    borderLeft: `4px solid ${a.color}`,
-                    boxShadow: isToday
-                      ? `0 0 0 2px ${a.color}40, 0 2px 8px rgba(0,0,0,0.06)`
-                      : '0 1px 4px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  {/* Header */}
-                  <div
-                    className="flex items-start justify-between px-4 pt-4 pb-3 rounded-t-xl"
-                    style={{ background: a.headerBg }}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold" style={{ color: a.color }}>{day}</p>
-                        {isToday && (
-                          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white leading-none" style={{ background: a.color }}>
-                            Today
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-stone-400 mt-0.5 font-medium">
-                        {new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                    {total > 0 && (
-                      <span
-                        className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                        style={{ background: `${a.color}18`, color: a.color }}
-                      >
-                        {done}/{total}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Items */}
-                  <ul className="flex-1 flex flex-col gap-1.5 px-4 py-3 min-h-[88px]">
-                    {total === 0 && <li className="text-xs text-stone-300 italic py-1.5">No tasks yet</li>}
-                    {merged.map(item =>
-                      item.kind === 'todo' ? (
-                        <li key={item.data.id} className="group/item flex items-start gap-2">
-                          <input
-                            type="checkbox" checked={item.data.completed}
-                            onChange={async () => { await toggleTodo(item.data.id); load(); }}
-                            className={`mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded ${a.checkColor}`}
-                          />
-                          <span className={`flex-1 text-sm leading-snug break-words ${item.data.completed ? 'line-through text-stone-300' : 'text-stone-700'}`}>
-                            {item.data.text}
-                          </span>
-                          <button
-                            onClick={async () => { await deleteTodo(item.data.id); load(); }}
-                            className="hidden shrink-0 text-stone-300 hover:text-rose-400 group-hover/item:block transition mt-0.5"
-                            aria-label="Delete"
-                          >
-                            <svg className="h-3.5 w-3.5" viewBox="0 0 12 12" fill="none">
-                              <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                            </svg>
-                          </button>
-                        </li>
-                      ) : (
-                        <li key={item.data.id} className="flex items-start gap-2">
-                          <input
-                            type="checkbox" checked={!!item.data.completed}
-                            onChange={async () => { await toggleCalendarEvent(item.data.id); load(); }}
-                            className={`mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer rounded ${a.checkColor}`}
-                          />
-                          <span className={`flex-1 text-sm leading-snug break-words ${item.data.completed ? 'line-through text-stone-300' : 'text-stone-700'}`}>
-                            {item.data.title}
-                          </span>
-                          <GoogleIcon />
-                        </li>
-                      )
-                    )}
-                  </ul>
-
-                  {/* Add input */}
-                  <form
-                    onSubmit={async e => {
-                      e.preventDefault();
-                      const text = (taskInputs[day] ?? '').trim();
-                      if (!text) return;
-                      await addTodo({ text, completed: false, date: dateStr, userId: user.id, scope: 'family', familyId: family.id });
-                      setTaskInputs(prev => ({ ...prev, [day]: '' }));
-                      load();
-                    }}
-                    className="flex items-center gap-2 border-t border-stone-100 px-4 py-3"
-                  >
-                    <svg className="h-3.5 w-3.5 shrink-0 text-stone-300" fill="none" viewBox="0 0 16 16">
-                      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    <input
-                      value={taskInputs[day] ?? ''}
-                      onChange={e => setTaskInputs(prev => ({ ...prev, [day]: e.target.value }))}
-                      placeholder="Add a task…"
-                      className="flex-1 bg-transparent text-xs text-stone-600 placeholder-stone-300 outline-none"
-                    />
-                    {(taskInputs[day] ?? '').trim() && (
-                      <button
-                        type="submit"
-                        className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white transition"
-                        style={{ background: a.color }}
-                      >
-                        Add
-                      </button>
-                    )}
-                  </form>
-                </div>
-              );
-            })}
-          </div>
+          )}
         </div>
       )}
 
@@ -539,13 +411,3 @@ function PanelSection({ label, children }: { label: string; children: React.Reac
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 18 18" fill="none" className="shrink-0 mt-0.5 opacity-70">
-      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-      <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-    </svg>
-  );
-}
