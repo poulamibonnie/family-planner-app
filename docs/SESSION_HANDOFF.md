@@ -2,7 +2,7 @@
 
 _Purpose: enough context to resume development cold. Update at the end of each working session._
 
-## As of: 2026-06 (premium redesign shipped; Vercel deploy in progress)
+## As of: 2026-06 (premium redesign shipped; docs + AI-workflow governance added)
 
 ## Recent work completed
 
@@ -15,16 +15,18 @@ _Purpose: enough context to resume development cold. Update at the end of each w
    - `login`/`register` switched to real `<form onSubmit>` + `type="submit"` (ADR-012).
    - `app/dashboard/self/page.tsx`: `user.familyId` → `user?.familyId` in `handleShareToggle` (TS null-narrowing in closure).
    - `app/api/google/callback/route.ts`: added `export const dynamic = 'force-dynamic'` to stop a build-time `URL_INVALID` crash (ADR-009, commit `1c077ff`).
-3. **Local `npm run build` passes clean** (all routes compiled, TypeScript OK).
-4. **Project documentation** created under `docs/` (this set).
+3. **Project documentation** created under `docs/` (commit `cd40cdf`): PROJECT_OVERVIEW, ARCHITECTURE, DATABASE_SCHEMA, FEATURE_STATUS, DECISIONS, SESSION_HANDOFF, CODEBASE_MAP.
+4. **Vercel verified**: production domain is `https://family-planner-app-buwf.vercel.app`; latest git-triggered deploy is **Ready**. `NEXT_PUBLIC_APP_URL` corrected to that domain via the dashboard.
+5. **`CLAUDE.md` working guide** added and expanded (commits `7fd9d49`, `82d2737`, `41f00fc`, `289904d`): project understanding, session-start reading order (§2), doc-maintenance rules, session-closing checklist, coding standards, architecture principles, feature lifecycle (§7 plan→approve→implement), long-session checkpointing (§8), pre-merge review (§9), commit message convention (§10).
+6. **`.gitignore`**: `app/simulate` (local demo harness) is now ignored (commit `7b8137b`).
+7. **`npm run build` passes clean** (all routes compiled, TypeScript OK) — last verified at this session close.
 
-## Files changed recently
-- `app/globals.css`, `app/login/page.tsx`, `app/register/page.tsx`
-- `app/dashboard/self/page.tsx`, `app/dashboard/family/page.tsx`
-- `app/api/google/callback/route.ts`
-- `components/Navbar.tsx`, `WeeklyBoard.tsx`, `TodoList.tsx`, `GoalList.tsx`, `MealPlan.tsx`, `ProgressStats.tsx`, `ShoppingList.tsx`
-- `lib/actions/shopping.ts`
-- `docs/*` (new)
+## Files changed recently (this documentation/governance session)
+- `CLAUDE.md` (expanded working guide)
+- `docs/*` (new doc set; `SESSION_HANDOFF.md` kept current)
+- `.gitignore` (ignore `app/simulate`)
+
+Prior redesign session touched: `app/globals.css`, `app/login/page.tsx`, `app/register/page.tsx`, `app/dashboard/self/page.tsx`, `app/dashboard/family/page.tsx`, `app/api/google/callback/route.ts`, `components/{Navbar,WeeklyBoard,TodoList,GoalList,MealPlan,ProgressStats,ShoppingList}.tsx`, `lib/actions/shopping.ts`.
 
 ## Current state / blockers
 
