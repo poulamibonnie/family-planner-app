@@ -7,6 +7,7 @@ import { db } from '../db';
 import { users } from '../schema';
 import { sessionOptions, type SessionData } from '../session';
 import { generateId } from '../utils';
+import { hashPassword, verifyPassword } from '../password';
 import type { User } from '../types';
 
 export async function login(
@@ -14,7 +15,17 @@ export async function login(
   password: string,
 ): Promise<{ error: string } | { success: true }> {
   const [user] = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
-  if (!user || user.password !== password) return { error: 'Invalid email or password.' };
+  if (!user) return { error: 'Invalid email or password.' };
+
+  const ok = await verifyPassword(password, user.password);
+  if (!ok) return { error: 'Invalid email or password.' };
+
+  // Upgrade legacy plaintext rows to scrypt on first successful login.
+  if (!user.password.startsWith('scrypt$')) {
+    await db.update(users)
+      .set({ password: await hashPassword(password) })
+      .where(eq(users.id, user.id));
+  }
 
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   session.userId = user.id;
@@ -35,7 +46,7 @@ export async function register(
     id,
     name: name.trim(),
     email: email.toLowerCase(),
-    password,
+    password: await hashPassword(password),
     createdAt: new Date().toISOString(),
   });
 
@@ -53,6 +64,15 @@ export async function logout(): Promise<void> {
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   if (!session.userId) return null;
-  const [user] = await db.select().from(users).where(eq(users.id, session.userId));
+  const [user] = await db
+    .select({
+      id:        users.id,
+      name:      users.name,
+      email:     users.email,
+      familyId:  users.familyId,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.id, session.userId));
   return (user as User) ?? null;
 }

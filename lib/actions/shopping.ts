@@ -2,35 +2,59 @@
 
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
-import { shoppingItems } from '../schema';
+import { shoppingItems, users } from '../schema';
 import { generateId, getWeekNumber, getYear } from '../utils';
+import { requireUserId, assertFamilyMember } from '../auth-guard';
 import type { ShoppingItem } from '../types';
 
 export async function addShoppingItem(data: Omit<ShoppingItem, 'id' | 'createdAt'>): Promise<ShoppingItem> {
-  const item: ShoppingItem = { ...data, id: generateId(), createdAt: new Date().toISOString() };
+  const userId = await requireUserId();
+  await assertFamilyMember(data.familyId);
+  const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
+  const item: ShoppingItem = {
+    ...data,
+    addedBy: userId,
+    addedByName: user?.name ?? 'Unknown',
+    id: generateId(),
+    createdAt: new Date().toISOString(),
+  };
   await db.insert(shoppingItems).values(item);
   return item;
 }
 
 export async function toggleShoppingItem(id: string): Promise<void> {
-  const [item] = await db.select({ completed: shoppingItems.completed }).from(shoppingItems).where(eq(shoppingItems.id, id));
-  if (item) await db.update(shoppingItems).set({ completed: !item.completed }).where(eq(shoppingItems.id, id));
+  const [item] = await db
+    .select({ familyId: shoppingItems.familyId, completed: shoppingItems.completed })
+    .from(shoppingItems)
+    .where(eq(shoppingItems.id, id));
+  if (!item) return;
+  await assertFamilyMember(item.familyId);
+  await db.update(shoppingItems).set({ completed: !item.completed }).where(eq(shoppingItems.id, id));
 }
 
 export async function deleteShoppingItem(id: string): Promise<void> {
+  const [item] = await db
+    .select({ familyId: shoppingItems.familyId })
+    .from(shoppingItems)
+    .where(eq(shoppingItems.id, id));
+  if (!item) return;
+  await assertFamilyMember(item.familyId);
   await db.delete(shoppingItems).where(eq(shoppingItems.id, id));
 }
 
 export async function getFamilyShoppingItems(familyId: string): Promise<ShoppingItem[]> {
+  await assertFamilyMember(familyId);
   const rows = await db.select().from(shoppingItems).where(eq(shoppingItems.familyId, familyId));
   return rows as ShoppingItem[];
 }
 
 export async function clearAllShoppingItems(familyId: string): Promise<void> {
+  await assertFamilyMember(familyId);
   await db.delete(shoppingItems).where(eq(shoppingItems.familyId, familyId));
 }
 
 export async function clearCompletedShoppingItems(familyId: string): Promise<void> {
+  await assertFamilyMember(familyId);
   await db.delete(shoppingItems).where(
     and(eq(shoppingItems.familyId, familyId), eq(shoppingItems.completed, true))
   );
@@ -41,6 +65,8 @@ export async function sendShoppingListEmail(
   pendingItems: Pick<ShoppingItem, 'text' | 'quantity'>[],
   familyName: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireUserId();
+
   const apiKey = process.env.BREVO_API_KEY;
   if (!apiKey) return { ok: false, error: 'Email service not configured.' };
 

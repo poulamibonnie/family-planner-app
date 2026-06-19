@@ -2,13 +2,13 @@
 
 Legend: ✅ Complete · 🟡 In progress · 🔵 Planned · ⛔ Blocked · ⚠️ Needs attention
 
-_Last updated: 2026-06 (premium redesign + Vercel deploy prep)_
+_Last updated: 2026-06 (security: password hashing + per-action authorization)_
 
 ## ✅ Completed
 
 | Feature | Notes |
 |---|---|
-| Email/password auth (register, login, logout) | iron-session cookie. ⚠️ passwords plaintext — see Needs Attention |
+| Email/password auth (register, login, logout) | iron-session cookie. Passwords hashed with scrypt (ADR-013); legacy plaintext rows auto-upgraded on login. |
 | Self mode dashboard | Today, This Week, Year Goals, Reminders, Progress tabs |
 | Daily to-do list | Date-scoped; add/toggle/delete; split pending/completed |
 | Weekly goal board | Day × week grid, per-day color accents |
@@ -32,26 +32,26 @@ _Last updated: 2026-06 (premium redesign + Vercel deploy prep)_
 | Item | State |
 |---|---|
 | Vercel production deployment | Env vars added to project; deploy build was the active task. `NEXT_PUBLIC_APP_URL` must match the final production domain, and the Google OAuth redirect URI must be whitelisted in Google Cloud console for the production URL. |
+| Per-action authorization | Shipped (ADR-014). All server actions now verify session ownership via `lib/auth-guard.ts`. Client-supplied user/family IDs are validated against the session. |
 
 ## 🔵 Planned / Backlog
 
 | Item | Rationale |
 |---|---|
-| Password hashing (bcrypt/argon2) | Security — currently plaintext |
+| ~~Password hashing~~ | Done — scrypt via `node:crypto` (ADR-013) |
 | Family-scoped reminders parity | Ensure reminder UX matches Self mode in Family mode |
 | Recurring events / goals | Common planner expectation |
 | Multi-week Google sync window | Currently only the current week is fetched |
 | Push/web notifications beyond in-tab | Reminders presently rely on browser notifications while app is open |
-| Remove dead `lib/store.ts` | Legacy localStorage layer, unused |
+| ~~Remove dead `lib/store.ts`~~ | Done — deleted alongside security hardening |
 | Real-time family updates | Currently requires refresh/refetch to see other members' changes |
 
 ## ⚠️ Needs Attention (Tech Debt / Risks)
 
 | Issue | Impact |
 |---|---|
-| **Plaintext passwords** (`lib/actions/auth.ts`) | Critical security gap; compares `user.password !== password` directly |
 | No DB foreign keys | Orphaned rows possible (e.g. items after a user leaves a family) |
-| Client-side-only auth gate | `app/dashboard/layout.tsx` redirects in `useEffect`; server actions should also verify session ownership for each mutation |
+| Client-side-only auth gate | `app/dashboard/layout.tsx` redirects in `useEffect`. Server actions now verify session ownership (ADR-014), but the client-side gate should eventually be replaced with middleware. |
 | `member_ids` JSON column | No referential integrity; manual JSON parse/stringify |
 | Secrets committed in `.env.local` | Present in working tree; ensure it is gitignored and rotate if ever pushed |
 

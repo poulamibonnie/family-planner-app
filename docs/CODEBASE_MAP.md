@@ -54,7 +54,7 @@ A directory-by-directory guide to the repository. Paths are relative to the proj
 | `lib/db.ts` | Drizzle client over `@libsql/client` using `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN`. |
 | `lib/schema.ts` | **Canonical Drizzle table definitions** (users, families, todos, goals, shopping_items, meal_entries, calendar_events, google_connections). See `DATABASE_SCHEMA.md`. |
 | `lib/types.ts` | TypeScript interfaces mirroring the schema; the lingua franca passed between client and server actions. |
-| `lib/store.ts` | ⚠️ **Legacy/dead** localStorage data layer. No imports. Predates Turso (ADR-001). Slated for deletion. |
+| ~~`lib/store.ts`~~ | Deleted — legacy localStorage layer (ADR-001). |
 
 ### Server actions (`lib/actions/`, all `'use server'`)
 | File | Key exports |
@@ -73,6 +73,8 @@ A directory-by-directory guide to the repository. Paths are relative to the proj
 |---|---|
 | `lib/session.ts` | iron-session `sessionOptions` and `SessionData` type. |
 | `lib/crypto.ts` | AES-256-GCM `encrypt`/`decrypt` for Google tokens; lazy `getKey()` reads `TOKEN_ENC_KEY` (ADR-010). |
+| `lib/password.ts` | `hashPassword` / `verifyPassword` using `node:crypto` scrypt. Stored format: `scrypt$<saltHex>$<hashHex>`. See ADR-013. |
+| `lib/auth-guard.ts` | `requireUserId`, `assertFamilyMember`, `assertOwnership` — server-side session guards used by all actions. See ADR-014. |
 | `lib/google.ts` | Google OAuth + Calendar v3 `fetch` client: `buildAuthUrl`, `exchangeCode`, `refreshAccessToken`, `fetchCalendarEvents`, `fetchPrimaryCalendarId`. |
 | `lib/utils.ts` | Date/week helpers (`getWeekNumber`, `getYear`, `todayISO`, `getStartOfWeekISO`, `goalDayToISO`, `dateToDayOfWeek`), `generateId`, `DAYS`, `MEAL_TYPES`. |
 | `lib/user-context.ts` | `UserContext` + `useUser()` for sharing the current user across the dashboard (ADR-007). |

@@ -4,6 +4,18 @@ Each entry: decision, context, rationale, and consequences. Newest concerns firs
 
 ---
 
+## ADR-014 — Per-action authorization via `lib/auth-guard.ts`
+**Status:** Accepted (supersedes the "thin authz" gap noted in ADR-002 and ADR-008)
+**Context:** All server actions previously trusted client-supplied user/family IDs. Any authenticated user could read or mutate another user's rows by passing a guessed ID.
+**Decision:** Add `lib/auth-guard.ts` with three helpers (`requireUserId`, `assertFamilyMember`, `assertOwnership`) that read the session cookie server-side. Every write action calls the appropriate guard before touching the DB. Self-scoped getters ignore the client-supplied `userId` param and substitute the session identity. Family-scoped getters assert membership before returning data. Action signatures are kept stable (no client call-site churn); client-supplied identity params are either overridden or validated.
+**Consequences:** An extra session read (+ occasionally a family membership DB query) per action. Acceptable at this scale. Guards throw `'Unauthorized'` on violation — surfaces as a rejected promise in the client, not a user-visible toast (improvement tracked but not critical). `lib/store.ts` (dead localStorage layer) deleted alongside this change as it was causing a TypeScript build failure after the `User` type was cleaned up.
+
+## ADR-013 — Password hashing with `node:crypto` scrypt
+**Status:** Accepted (supersedes ADR-008)
+**Context:** Passwords were stored and compared as plaintext — a critical security gap tracked since the prototype.
+**Decision:** Hash new passwords with scrypt (N=16384, r=8, p=1, 64-byte output) using `node:crypto` built-ins only — no new dependency. Stored format: `scrypt$<saltHex>$<hashHex>`. Existing plaintext rows are detected by the absence of the `scrypt$` prefix and auto-upgraded to a hash on the next successful login (lazy migration). `hashPassword` / `verifyPassword` live in `lib/password.ts`. `password` is excluded from the `User` interface and never sent to the client.
+**Consequences:** No schema change required (column stays `text`). Existing users are transparently migrated on first login. scrypt was chosen over bcrypt/argon2 (the ADR-008 suggestions) to avoid adding a native dependency (consistent with the hand-rolled crypto in `lib/crypto.ts`). The `node:crypto` scrypt implementation is solid for this use case; argon2id would be preferable if the app ever needs to meet a specific compliance standard.
+
 ## ADR-001 — Migrate persistence from localStorage to Turso/Drizzle
 **Status:** Accepted
 **Context:** The app began as a client-only prototype storing everything in `localStorage` (`lib/store.ts`). This could not support a *shared* family data model — each browser had its own siloed data.

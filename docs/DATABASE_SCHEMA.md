@@ -22,7 +22,7 @@ The account table. One row per person.
 | `id` | text | PK | |
 | `name` | text | no | Display name |
 | `email` | text | no | **Unique** |
-| `password` | text | no | ⚠️ plaintext (see ADR-008) |
+| `password` | text | no | scrypt hash (`scrypt$<saltHex>$<hashHex>`) — see ADR-013 |
 | `family_id` | text | yes | Current family membership (denormalized; also tracked in `families.member_ids`) |
 | `created_at` | text | no | ISO timestamp |
 

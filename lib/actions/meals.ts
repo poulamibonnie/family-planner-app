@@ -4,6 +4,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { mealEntries } from '../schema';
 import { generateId } from '../utils';
+import { assertFamilyMember } from '../auth-guard';
 import type { MealEntry, DayOfWeek, MealType } from '../types';
 
 export async function setMeal(
@@ -14,6 +15,8 @@ export async function setMeal(
   week: number,
   year: number,
 ): Promise<void> {
+  await assertFamilyMember(familyId);
+
   const [existing] = await db.select().from(mealEntries).where(
     and(
       eq(mealEntries.familyId, familyId),
@@ -38,6 +41,7 @@ export async function setMeal(
 }
 
 export async function getFamilyMeals(familyId: string, week: number, year: number): Promise<MealEntry[]> {
+  await assertFamilyMember(familyId);
   const rows = await db.select().from(mealEntries).where(
     and(eq(mealEntries.familyId, familyId), eq(mealEntries.weekNumber, week), eq(mealEntries.year, year)),
   );

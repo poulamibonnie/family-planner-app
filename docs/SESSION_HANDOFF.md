@@ -2,11 +2,20 @@
 
 _Purpose: enough context to resume development cold. Update at the end of each working session._
 
-## As of: 2026-06 (premium redesign shipped; docs + AI-workflow governance added)
+## As of: 2026-06 (security hardening: password hashing + per-action authorization)
 
 ## Recent work completed
 
-1. **Premium redesign** (commit `fe1cf89`) — full visual overhaul to a warm-violet design system:
+1. **Security hardening** (ADR-013 + ADR-014):
+   - `lib/password.ts` — scrypt password hashing (`node:crypto`, N=16384, r=8, p=1). Format: `scrypt$<saltHex>$<hashHex>`. No new dependency.
+   - `lib/auth-guard.ts` — `requireUserId`, `assertFamilyMember`, `assertOwnership` helpers. All server actions now validate session identity server-side; client-supplied IDs are overridden or verified.
+   - `lib/actions/auth.ts` — `register` hashes; `login` verifies + auto-upgrades legacy plaintext rows on success; `getCurrentUser` column-selects to exclude `password`.
+   - `lib/types.ts` — `password` removed from `User` interface (never sent to client).
+   - All action files (`todos`, `goals`, `events`, `shopping`, `meals`, `family`) hardened with session-based ownership checks. Signatures unchanged; client call sites untouched.
+   - `lib/store.ts` deleted — was dead legacy code (ADR-001) that started failing the TypeScript build after the `User` type cleanup.
+   - Build verified clean: TypeScript strict + all routes compiled.
+
+2. **Premium redesign** (commit `fe1cf89`) — full visual overhaul to a warm-violet design system:
    - New global color system in `app/globals.css` (background `#FAFAF8`, `red-*` remapped to violet `#7C5CFC` — see ADR-011).
    - Rewrote `Navbar`, `login`, `register`, `WeeklyBoard`, `TodoList`, `GoalList`, `MealPlan`, `ProgressStats`, and both dashboard pages (`self`, `family`).
    - Self "Today" tab: circular progress ring, 2×2 stats grid, task composer, split upcoming/completed, `TodayTaskCard`, FAB.
@@ -21,10 +30,14 @@ _Purpose: enough context to resume development cold. Update at the end of each w
 6. **`.gitignore`**: `app/simulate` (local demo harness) is now ignored (commit `7b8137b`).
 7. **`npm run build` passes clean** (all routes compiled, TypeScript OK) — last verified at this session close.
 
-## Files changed recently (this documentation/governance session)
-- `CLAUDE.md` (expanded working guide)
-- `docs/*` (new doc set; `SESSION_HANDOFF.md` kept current)
-- `.gitignore` (ignore `app/simulate`)
+## Files changed recently (security hardening session)
+- `lib/password.ts` (new — scrypt hashing)
+- `lib/auth-guard.ts` (new — session guards)
+- `lib/actions/auth.ts` (hash on register, verify+upgrade on login, strip password from getCurrentUser)
+- `lib/types.ts` (remove `password` from `User`)
+- `lib/actions/todos.ts`, `goals.ts`, `events.ts`, `shopping.ts`, `meals.ts`, `family.ts` (per-action authz)
+- `lib/store.ts` (deleted — dead localStorage legacy)
+- `docs/DECISIONS.md`, `FEATURE_STATUS.md`, `CODEBASE_MAP.md`, `DATABASE_SCHEMA.md`, `SESSION_HANDOFF.md`
 
 Prior redesign session touched: `app/globals.css`, `app/login/page.tsx`, `app/register/page.tsx`, `app/dashboard/self/page.tsx`, `app/dashboard/family/page.tsx`, `app/api/google/callback/route.ts`, `components/{Navbar,WeeklyBoard,TodoList,GoalList,MealPlan,ProgressStats,ShoppingList}.tsx`, `lib/actions/shopping.ts`.
 
@@ -39,8 +52,8 @@ Prior redesign session touched: `app/globals.css`, `app/login/page.tsx`, `app/re
 ## Next tasks (in order)
 
 1. **Whitelist the production OAuth redirect URI** (`https://family-planner-app-buwf.vercel.app/api/google/callback`) in the Google Cloud console, or Google login will fail in prod.
-2. **Smoke test in prod:** register/login, create a family, add todos/shopping items, send a shopping email, connect+sync Google Calendar.
-3. Address top tech debt when ready: **hash passwords** (ADR-008) and add **per-action authorization** to server actions.
+2. **Smoke test in prod:** register/login, create a family, add todos/shopping items, send a shopping email, connect+sync Google Calendar. Verify existing users are migrated (password field becomes `scrypt$…` on next login).
+3. **Remaining tech debt:** no DB foreign keys; client-side-only auth gate (dashboard layout redirects in `useEffect` — could be replaced with Next.js middleware for server-side enforcement).
 
 ## Context needed to resume
 - Read `ARCHITECTURE.md` and `CODEBASE_MAP.md` first.

@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  // password intentionally omitted — never sent to the client
   familyId?: string;
   createdAt: string;
 }

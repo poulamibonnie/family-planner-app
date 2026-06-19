@@ -4,9 +4,16 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db';
 import { calendarEvents } from '../schema';
 import { generateId } from '../utils';
+import { requireUserId, assertFamilyMember, assertOwnership } from '../auth-guard';
 import type { CalendarEvent } from '../types';
 
 export async function unshareEventFromFamily(eventId: string): Promise<void> {
+  const [ev] = await db
+    .select({ userId: calendarEvents.userId, scope: calendarEvents.scope, familyId: calendarEvents.familyId })
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, eventId));
+  if (!ev) return;
+  await assertOwnership(ev);
   await db.delete(calendarEvents).where(eq(calendarEvents.sharedFromId, eventId));
   await db.update(calendarEvents).set({ sharedToFamilyAt: null }).where(eq(calendarEvents.id, eventId));
 }
@@ -14,6 +21,8 @@ export async function unshareEventFromFamily(eventId: string): Promise<void> {
 export async function shareEventToFamily(eventId: string, familyId: string): Promise<void> {
   const [event] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, eventId));
   if (!event) return;
+  await assertOwnership(event);
+  await assertFamilyMember(familyId);
   await db.insert(calendarEvents).values({
     id: generateId(),
     title: event.title,
@@ -38,8 +47,13 @@ export async function shareEventToFamily(eventId: string, familyId: string): Pro
 export async function addCalendarEvent(
   data: Omit<CalendarEvent, 'id' | 'createdAt' | 'notified' | 'source'>,
 ): Promise<CalendarEvent> {
+  const userId = await requireUserId();
+  if (data.scope === 'family' && data.familyId) {
+    await assertFamilyMember(data.familyId);
+  }
   const event: CalendarEvent = {
     ...data,
+    userId,
     id: generateId(),
     notified: false,
     source: 'local',
@@ -50,20 +64,38 @@ export async function addCalendarEvent(
 }
 
 export async function toggleCalendarEvent(id: string): Promise<void> {
-  const [ev] = await db.select({ completed: calendarEvents.completed }).from(calendarEvents).where(eq(calendarEvents.id, id));
+  const [ev] = await db
+    .select({ userId: calendarEvents.userId, scope: calendarEvents.scope, familyId: calendarEvents.familyId, completed: calendarEvents.completed })
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, id));
   if (!ev) return;
+  await assertOwnership(ev);
   await db.update(calendarEvents).set({ completed: !ev.completed }).where(eq(calendarEvents.id, id));
 }
 
 export async function markEventNotified(id: string): Promise<void> {
+  const [ev] = await db
+    .select({ userId: calendarEvents.userId, scope: calendarEvents.scope, familyId: calendarEvents.familyId })
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, id));
+  if (!ev) return;
+  await assertOwnership(ev);
   await db.update(calendarEvents).set({ notified: true }).where(eq(calendarEvents.id, id));
 }
 
 export async function deleteCalendarEvent(id: string): Promise<void> {
+  const [ev] = await db
+    .select({ userId: calendarEvents.userId, scope: calendarEvents.scope, familyId: calendarEvents.familyId })
+    .from(calendarEvents)
+    .where(eq(calendarEvents.id, id));
+  if (!ev) return;
+  await assertOwnership(ev);
   await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
 }
 
-export async function getSelfEvents(userId: string): Promise<CalendarEvent[]> {
+// _userId kept for signature stability; session identity is used instead.
+export async function getSelfEvents(_userId: string): Promise<CalendarEvent[]> {
+  const userId = await requireUserId();
   const rows = await db.select().from(calendarEvents).where(
     and(eq(calendarEvents.scope, 'self'), eq(calendarEvents.userId, userId)),
   );
@@ -71,6 +103,7 @@ export async function getSelfEvents(userId: string): Promise<CalendarEvent[]> {
 }
 
 export async function getFamilyEvents(familyId: string): Promise<CalendarEvent[]> {
+  await assertFamilyMember(familyId);
   const rows = await db.select().from(calendarEvents).where(
     and(eq(calendarEvents.scope, 'family'), eq(calendarEvents.familyId, familyId)),
   );
