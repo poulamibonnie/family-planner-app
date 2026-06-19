@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Goal, DayOfWeek, CalendarEvent } from '@/lib/types';
 
 const DAYS: DayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -36,6 +36,7 @@ export default function WeeklyBoard({
   });
   const [quickText, setQuickText] = useState('');
   const [quickAdding, setQuickAdding] = useState(false);
+  const inputRefs = useRef<Partial<Record<DayOfWeek, HTMLInputElement | null>>>({});
 
   const weekDates = getWeekDates(weekNumber, year);
   const today = new Date().toISOString().split('T')[0];
@@ -131,8 +132,15 @@ export default function WeeklyBoard({
                 )}
               </div>
 
-              {/* Task list */}
-              <ul className="flex-1 flex flex-col gap-0.5 px-3 py-3 min-h-[120px]">
+              {/* Task list — clicking empty space focuses the add input */}
+              <ul
+                className="flex-1 flex flex-col gap-0.5 px-3 py-3 min-h-[120px] cursor-text"
+                onClick={e => {
+                  if (!(e.target as HTMLElement).closest('li')) {
+                    inputRefs.current[day]?.focus();
+                  }
+                }}
+              >
                 {total === 0 && (
                   <li className="text-xs text-stone-300 italic py-2 px-1">No tasks yet</li>
                 )}
@@ -186,10 +194,8 @@ export default function WeeklyBoard({
                 onSubmit={e => handleAdd(e, day)}
                 className="flex items-center gap-2 border-t border-stone-100 px-4 py-3"
               >
-                <svg className="h-3.5 w-3.5 shrink-0 text-stone-300" fill="none" viewBox="0 0 16 16">
-                  <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
                 <input
+                  ref={el => { inputRefs.current[day] = el; }}
                   value={inputs[day]}
                   onChange={e => setInputs(prev => ({ ...prev, [day]: e.target.value }))}
                   placeholder="Add a task…"
@@ -197,11 +203,14 @@ export default function WeeklyBoard({
                 />
                 <button
                   type="submit"
+                  aria-label="Add task"
+                  className="shrink-0 transition-opacity disabled:opacity-30"
+                  style={{ color: a.color }}
                   disabled={!inputs[day].trim()}
-                  className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-white transition disabled:opacity-30"
-                  style={{ background: a.color }}
                 >
-                  Add
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 16 16">
+                    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
+                  </svg>
                 </button>
               </form>
             </div>
