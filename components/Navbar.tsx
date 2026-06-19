@@ -66,7 +66,7 @@ export default function Navbar({ user }: Props) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-stone-100 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-[60px] max-w-7xl items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
 
         {/* Logo */}
         <Link href="/dashboard/self" className="flex items-center gap-2.5 shrink-0 group">
@@ -87,6 +87,7 @@ export default function Navbar({ user }: Props) {
               className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 isSelf ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'
               }`}
+              style={isSelf ? { borderBottom: '2px solid #7C5CFC' } : {}}
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z"/>
@@ -98,6 +99,7 @@ export default function Navbar({ user }: Props) {
               className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 isFamily ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'
               }`}
+              style={isFamily ? { borderBottom: '2px solid #7C5CFC' } : {}}
             >
               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z"/>
@@ -109,7 +111,15 @@ export default function Navbar({ user }: Props) {
 
         {/* Right — User */}
         <div className="relative flex shrink-0 items-center gap-3" ref={menuRef}>
-          <span className="hidden md:block text-sm font-medium text-stone-500">{displayName}</span>
+          <button
+            onClick={() => { setShowMenu(s => !s); setEditing(false); setNameInput(displayName); }}
+            className="hidden md:flex items-center gap-1 text-sm font-medium text-stone-600 transition hover:text-stone-900"
+          >
+            <span>{displayName}</span>
+            <svg className="h-3.5 w-3.5 text-stone-400" viewBox="0 0 12 12" fill="currentColor">
+              <path d="M6 8.5L1.5 4h9L6 8.5z"/>
+            </svg>
+          </button>
 
           <button
             onClick={() => { setShowMenu(s => !s); setEditing(false); setNameInput(displayName); }}

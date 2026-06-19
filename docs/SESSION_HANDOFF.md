@@ -2,9 +2,17 @@
 
 _Purpose: enough context to resume development cold. Update at the end of each working session._
 
-## As of: 2026-06 (security hardening: password hashing + per-action authorization)
+## As of: 2026-06-19 (UI redesign: week navigator + sidebar panels + navbar chevron)
 
 ## Recent work completed
+
+0. **This Week tab UI redesign** (matching reference mockup, 2026-06-19):
+   - **Week navigator**: replaced static "Week X · YEAR" pill with `< 📅 Week of Jun 15 – Jun 21, 2026 >` prev/next navigation. State is a `weekStart` Date object; navigating re-fetches weekly goals via `viewWeek`/`viewYear` derived values. The share panel continues to show the current week's items (not the navigated week).
+   - **Sidebar panels** (`components/WeeklyBoard.tsx`): new right-side `xl:flex` sidebar with two cards: **Week Overview** (SVG donut progress ring, "X of Y tasks completed", day-colored dots, "View insights >" button) and **Quick Add** (text input + "Add Task" button that adds to today's day-of-week in the viewed week).
+   - **Layout**: WeeklyBoard now uses `flex gap-3 items-start` with the day cards grid (`flex-1`) plus a `w-56 hidden xl:flex` sidebar column. Day card grid retains `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`.
+   - **Tip bar**: dismissable banner below WeeklyBoard ("💡 Tip: Click the day cards to add tasks, or use Quick Add in the sidebar").
+   - **Navbar**: username now shows with a ▼ chevron and is clickable (opens dropdown, same as avatar). Active mode tab (`My Space`/`Family`) has a purple `border-b-2` underline indicator in addition to the white card.
+   - Build verified clean: TypeScript strict + all routes compiled.
 
 1. **Security hardening** (ADR-013 + ADR-014):
    - `lib/password.ts` — scrypt password hashing (`node:crypto`, N=16384, r=8, p=1). Format: `scrypt$<saltHex>$<hashHex>`. No new dependency.
@@ -30,7 +38,12 @@ _Purpose: enough context to resume development cold. Update at the end of each w
 6. **`.gitignore`**: `app/simulate` (local demo harness) is now ignored (commit `7b8137b`).
 7. **`npm run build` passes clean** (all routes compiled, TypeScript OK) — last verified at this session close.
 
-## Files changed recently (security hardening session)
+## Files changed recently (UI redesign session, 2026-06-19)
+- `components/WeeklyBoard.tsx` — sidebar layout, Week Overview + Quick Add cards, `onQuickAdd` prop
+- `components/Navbar.tsx` — username chevron + clickable, active-tab purple underline
+- `app/dashboard/self/page.tsx` — week navigation state (`weekStart`), `viewWeek`/`viewYear`, `viewedWeekGoogleEvents`, `dismissedTip`, week navigator UI, tip bar
+
+## Files changed previously (security hardening session)
 - `lib/password.ts` (new — scrypt hashing)
 - `lib/auth-guard.ts` (new — session guards)
 - `lib/actions/auth.ts` (hash on register, verify+upgrade on login, strip password from getCurrentUser)

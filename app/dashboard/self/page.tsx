@@ -6,7 +6,7 @@ import { getSelfTodos, addTodo, toggleTodo, deleteTodo, shareTodoToFamily, unsha
 import { getSelfGoals, addGoal, toggleGoal, deleteGoal, shareGoalToFamily, unshareGoalFromFamily } from '@/lib/actions/goals';
 import { getSelfEvents, shareEventToFamily, unshareEventFromFamily, toggleCalendarEvent } from '@/lib/actions/events';
 import { getGoogleConnection, getGoogleAuthUrl, syncGoogleCalendar } from '@/lib/actions/google';
-import type { TodoItem, Goal, CalendarEvent, GoogleConnection } from '@/lib/types';
+import type { TodoItem, Goal, CalendarEvent, GoogleConnection, DayOfWeek } from '@/lib/types';
 import { todayISO, getWeekNumber, getYear, formatDisplayDate, getStartOfWeekISO, getEndOfWeekISO, dateToDayOfWeek, DAYS } from '@/lib/utils';
 import GoalList from '@/components/GoalList';
 import WeeklyBoard from '@/components/WeeklyBoard';
@@ -38,6 +38,12 @@ export default function SelfPage() {
   const [googleConn, setGoogleConn]     = useState<GoogleConnection | null>(null);
   const [banner, setBanner]             = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isSyncing, startSync]          = useTransition();
+  const [dismissedTip, setDismissedTip] = useState(false);
+  const [weekStart, setWeekStart]       = useState<Date>(() => {
+    const now = new Date();
+    const diff = (now.getDay() + 6) % 7; // days since Monday (ISO)
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff);
+  });
   const inputRef = useRef<HTMLInputElement>(null);
 
   const today       = todayISO();
@@ -46,11 +52,15 @@ export default function SelfPage() {
   const startOfWeek = getStartOfWeekISO();
   const endOfWeek   = getEndOfWeekISO();
 
+  const viewWeek    = getWeekNumber(weekStart);
+  const viewYear    = getYear(weekStart);
+  const viewWeekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+
   const load = useCallback(async () => {
     if (!user) return;
     const [todayTodos, weekly, yearly, eventsData, connData] = await Promise.all([
       getSelfTodos(user.id, today),
-      getSelfGoals(user.id, 'weekly', week, year),
+      getSelfGoals(user.id, 'weekly', viewWeek, viewYear),
       getSelfGoals(user.id, 'yearly', undefined, year),
       getSelfEvents(user.id),
       getGoogleConnection(),
@@ -60,7 +70,7 @@ export default function SelfPage() {
     setYearlyGoals(yearly);
     setEvents(eventsData);
     setGoogleConn(connData);
-  }, [user, today, week, year]);
+  }, [user, today, viewWeek, viewYear, year]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -99,11 +109,36 @@ export default function SelfPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [googleConn]);
 
+  const isInitialWeek = useRef(true);
+  useEffect(() => {
+    if (isInitialWeek.current) { isInitialWeek.current = false; return; }
+    if (!googleConn?.connected) return;
+    const tMin = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()).toISOString();
+    const tMax = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6, 23, 59, 59).toISOString();
+    startSync(async () => {
+      const result = await syncGoogleCalendar(tMin, tMax);
+      if ('error' in result) showBanner('error', result.error);
+      else { if (result.synced > 0) showBanner('success', `Synced ${result.synced} event${result.synced !== 1 ? 's' : ''}.`); load(); }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekStart]);
+
   if (!user) return null;
 
   const localEvents       = events.filter(e => e.source !== 'google');
   const todayGoogleEvents = events.filter(e => e.source === 'google' && e.date === today);
   const weekGoogleEvents  = events.filter(e => e.source === 'google' && e.date >= startOfWeek && e.date <= endOfWeek);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const toLocalISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const viewWeekStartStr = toLocalISO(weekStart);
+  const viewWeekEndStr   = toLocalISO(viewWeekEnd);
+  const viewedWeekGoogleEvents = events.filter(e =>
+    e.source === 'google' && e.date >= viewWeekStartStr && e.date <= viewWeekEndStr
+  );
+
+  const fmtWD = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const weekRangeLabel = `Week of ${fmtWD(weekStart)} – ${fmtWD(viewWeekEnd)}, ${viewYear}`;
 
   /* ── Today tab helpers ── */
   type TodayItem = { kind: 'todo'; data: TodoItem } | { kind: 'google'; data: CalendarEvent };
@@ -527,26 +562,71 @@ export default function SelfPage() {
       ══════════════════════════════════ */}
       {tab === 'weekly' && (
         <div className="space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h2 className="text-xl font-bold text-stone-900 tracking-tight">This Week&apos;s Tasks</h2>
               <p className="text-sm text-stone-400 mt-0.5">Plan and track your week, day by day</p>
             </div>
-            <span
-              className="rounded-full px-3 py-1 text-xs font-semibold"
-              style={{ background: '#F5F0FF', color: '#7C5CFC', border: '1px solid #D9C8FF' }}
-            >
-              Week {week} · {year}
-            </span>
+            {/* Week navigator */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setWeekStart(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7))}
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+                aria-label="Previous week"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                  <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <span
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold select-none"
+                style={{ background: '#F5F0FF', color: '#7C5CFC', border: '1px solid #D9C8FF' }}
+              >
+                📅 {weekRangeLabel}
+              </span>
+              <button
+                onClick={() => setWeekStart(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7))}
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+                aria-label="Next week"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 12l4-4-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
           </div>
           <WeeklyBoard
-            goals={weeklyGoals} weekNumber={week} year={year}
-            onAdd={async (text, day) => { await addGoal({ text, completed: false, type: 'weekly', weekNumber: week, year, day, userId: user.id, scope: 'self' }); await load(); }}
+            goals={weeklyGoals} weekNumber={viewWeek} year={viewYear}
+            onAdd={async (text, day) => { await addGoal({ text, completed: false, type: 'weekly', weekNumber: viewWeek, year: viewYear, day, userId: user.id, scope: 'self' }); await load(); }}
             onToggle={async id => { await toggleGoal(id); await load(); }}
             onDelete={async id => { await deleteGoal(id); await load(); }}
-            googleEvents={weekGoogleEvents}
+            googleEvents={viewedWeekGoogleEvents}
             onGoogleToggle={async id => { await toggleCalendarEvent(id); await load(); }}
+            onQuickAdd={async text => {
+              const dayNames: DayOfWeek[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+              const todayDow = dayNames[new Date().getDay()];
+              await addGoal({ text, completed: false, type: 'weekly', weekNumber: viewWeek, year: viewYear, day: todayDow, userId: user.id, scope: 'self' });
+              await load();
+            }}
           />
+          {/* Tip bar */}
+          {!dismissedTip && (
+            <div
+              className="flex items-center gap-3 rounded-2xl border border-stone-100 bg-white px-4 py-3 text-sm text-stone-500 shadow-sm"
+            >
+              <span className="shrink-0">💡</span>
+              <span><strong className="font-semibold text-stone-700">Tip:</strong> Click the day cards to add tasks, or use Quick Add in the sidebar</span>
+              <button
+                onClick={() => setDismissedTip(true)}
+                className="ml-auto shrink-0 text-stone-300 transition hover:text-stone-500"
+                aria-label="Dismiss"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       )}
 

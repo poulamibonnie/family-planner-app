@@ -48,7 +48,10 @@ export async function disconnectGoogle(): Promise<void> {
     );
 }
 
-export async function syncGoogleCalendar(): Promise<{ synced: number } | { error: string }> {
+export async function syncGoogleCalendar(
+  timeMin?: string,
+  timeMax?: string,
+): Promise<{ synced: number } | { error: string }> {
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
   if (!session.userId) return { error: 'Not authenticated' };
 
@@ -77,14 +80,16 @@ export async function syncGoogleCalendar(): Promise<{ synced: number } | { error
     }
   }
 
-  // Fetch entire current week: Monday 00:00:00 → Sunday 23:59:59
-  const now = new Date();
-  const daysToMonday = (now.getDay() + 6) % 7;
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
-  const daysUntilSunday = now.getDay() === 0 ? 0 : 7 - now.getDay();
-  const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 23, 59, 59);
-  const timeMin = weekStart.toISOString();
-  const timeMax = weekEnd.toISOString();
+  // If caller didn't supply a range, default to the current ISO week
+  if (!timeMin || !timeMax) {
+    const now = new Date();
+    const daysToMonday = (now.getDay() + 6) % 7;
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToMonday);
+    const daysUntilSunday = now.getDay() === 0 ? 0 : 7 - now.getDay();
+    const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 23, 59, 59);
+    timeMin = weekStart.toISOString();
+    timeMax = weekEnd.toISOString();
+  }
 
   let events: Awaited<ReturnType<typeof fetchCalendarEvents>>;
   try {
