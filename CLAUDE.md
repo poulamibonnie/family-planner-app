@@ -24,15 +24,20 @@ Key mental model:
 
 ## 2. Docs to read first (in order)
 
-Before any non-trivial task, read:
+When starting a session, read these in order:
 
-1. **`docs/SESSION_HANDOFF.md`** — current state, what changed last, blockers, next tasks. **Read this first, every session.**
-2. **`docs/PROJECT_OVERVIEW.md`** — what the product is and its feature set.
-3. **`docs/ARCHITECTURE.md`** — layers, data flows, integrations.
-4. **`docs/CODEBASE_MAP.md`** — where everything lives.
-5. **`docs/DATABASE_SCHEMA.md`** — tables, columns, relationships (consult before any data change).
-6. **`docs/DECISIONS.md`** — ADR log; check before changing anything load-bearing, and add an entry when you make a significant decision.
-7. **`docs/FEATURE_STATUS.md`** — roadmap and known gaps/tech debt.
+1. Read `docs/PROJECT_OVERVIEW.md`
+2. Read `docs/ARCHITECTURE.md`
+3. Read `docs/FEATURE_STATUS.md`
+4. Read `docs/SESSION_HANDOFF.md`
+5. Read `docs/CODEBASE_MAP.md`
+
+Only inspect source files if additional details are required.
+
+Two more docs are consulted **on demand** (not part of the startup read):
+
+- **`docs/DATABASE_SCHEMA.md`** — tables, columns, relationships; consult before any data change.
+- **`docs/DECISIONS.md`** — ADR log; check before changing anything load-bearing, and add an entry when you make a significant decision.
 
 If a task touches an area covered by an ADR, honor the decision or explicitly supersede it with a new ADR.
 
