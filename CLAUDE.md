@@ -142,6 +142,33 @@ Check:
 
 **Review report format:** a short summary verdict, then findings grouped by the categories above, each tagged by severity (blocker / should-fix / nice-to-have) with file references. Call out anything that should block the merge.
 
+## 10. Commit message convention
+
+This repo uses **imperative, capitalized subject lines** (not Conventional Commits / no `feat:`/`fix:` prefixes). Match the existing history.
+
+**Subject line:**
+- Imperative mood, capitalized, no trailing period (e.g. "Add shopping list email export", "Fix progress tab not reflecting completions").
+- ~50 chars, ≤72 max. Describe *what changes*, not "changed X".
+- An optional area prefix is fine where it adds clarity (e.g. "UI polish: …", "Fix: …"), but a plain imperative verb is preferred.
+
+**Body (when the change isn't self-explanatory):**
+- Blank line after the subject, then wrap at ~72 chars.
+- Explain the *what* and *why*, not the line-by-line *how*. Note user-facing impact and any ADR added/affected.
+
+**Required trailer** — every commit ends with the co-author trailer:
+
+```
+Co-Authored-By: Claude <model> <noreply@anthropic.com>
+```
+
+(Use the model actually in use, e.g. `Claude Opus 4.8`.)
+
+**Rules:**
+- Commit (and push) **only when the user asks**. Pushing `main` auto-deploys (section 5).
+- One logical change per commit; keep unrelated changes out.
+- Never commit secrets; `.env.local` stays untracked.
+- Don't bypass hooks/signing (`--no-verify`, `--no-gpg-sign`) unless explicitly asked.
+
 ---
 
 When in doubt, read the relevant `docs/` file and the surrounding code before acting, and keep the docs true as you go.
