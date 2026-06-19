@@ -87,6 +87,61 @@ Before ending a session, verify:
 - **Authorization is per-action and currently thin** — when adding/altering actions, verify the session owns the data being mutated. (Hardening this and replacing plaintext passwords are tracked tech debt — ADR-008 / `FEATURE_STATUS.md`.)
 - **Don't resurrect `lib/store.ts`** — it's the dead localStorage layer from before the Turso migration (ADR-001).
 
+## 7. Starting a new feature
+
+When asked to start a feature, follow this protocol — **plan first, do not modify code yet**:
+
+1. **Read the documentation first** (the session-start order in section 2).
+2. **Propose an implementation plan** for the named feature. Do not write or change any code until the plan is approved.
+
+The plan must cover:
+
+1. **Files to modify** — which files/components/actions, and what changes in each.
+2. **Database changes** — schema/migrations (`lib/schema.ts`, Drizzle), or explicitly "none".
+3. **API changes** — server actions (`lib/actions/*`) or route handlers added/changed.
+4. **UI changes** — pages/components affected and the intended UX.
+5. **Risks** — edge cases, data-integrity concerns, security/auth implications, and any ADRs affected.
+6. **Testing strategy** — how it will be verified (build, manual smoke test, scenarios to check).
+
+**Then wait for approval before implementing.**
+
+### After the plan is approved
+
+Once the user reviews the plan and says to proceed:
+
+1. **Proceed with implementation.**
+2. **Follow the approved plan** — if reality forces a deviation, stop and flag it rather than silently diverging.
+3. **Update all affected documentation as changes are made** — keep `docs/` in sync in the same change (see section 3), add an ADR for any significant decision (`docs/DECISIONS.md`), and update `docs/SESSION_HANDOFF.md`.
+4. Run the session-closing checklist (section 4) before considering the feature done.
+
+## 8. Long sessions / checkpointing
+
+If a session gets long, checkpoint progress **without halting the work**:
+
+1. **Summarize current progress.**
+2. **Update `docs/SESSION_HANDOFF.md`** with:
+   - **Completed work**
+   - **Remaining work**
+   - **Modified files**
+3. **Do not stop implementation** — checkpoint and keep going.
+
+This keeps state recoverable if the session is interrupted or context is compacted.
+
+## 9. Pre-merge review
+
+Before merging a feature, review the **entire** implementation (not just the latest diff) and produce a **review report**.
+
+Check:
+
+- **Code quality** — readability, naming, error handling, matches surrounding style; no `any` leaks.
+- **Architecture consistency** — server-action boundary respected, share-by-reference model, ADRs honored (section 6).
+- **Dead code** — unused imports/exports/files, leftover scaffolding, commented-out blocks.
+- **Documentation completeness** — `docs/` updated for all changes, ADRs added where due, `SESSION_HANDOFF.md` current (section 3).
+- **Missing tests** — untested paths and the scenarios that should cover them.
+- **Performance concerns** — N+1 queries in actions, unnecessary refetches/renders, large client payloads.
+
+**Review report format:** a short summary verdict, then findings grouped by the categories above, each tagged by severity (blocker / should-fix / nice-to-have) with file references. Call out anything that should block the merge.
+
 ---
 
 When in doubt, read the relevant `docs/` file and the surrounding code before acting, and keep the docs true as you go.
