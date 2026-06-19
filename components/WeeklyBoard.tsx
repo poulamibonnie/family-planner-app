@@ -78,6 +78,8 @@ export default function WeeklyBoard({
     }
   }
 
+  const [showInsights, setShowInsights] = useState(false);
+
   /* ── Week overview stats ── */
   const totalTasks = goals.length + googleEvents.length;
   const doneTasks  = goals.filter(g => g.completed).length + googleEvents.filter(e => !!e.completed).length;
@@ -298,6 +300,7 @@ export default function WeeklyBoard({
 
           {/* View insights */}
           <button
+            onClick={() => setShowInsights(true)}
             className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-stone-500 hover:bg-stone-50 transition"
             style={{ border: '1px solid #E4E4E7' }}
           >
@@ -373,6 +376,104 @@ export default function WeeklyBoard({
           </form>
         </div>
       </div>
+
+      {/* ── Insights modal ── */}
+      {showInsights && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]"
+            onClick={() => setShowInsights(false)}
+          />
+          <div
+            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-xs flex-col bg-white shadow-2xl"
+            style={{ borderLeft: '1px solid #E4E4E7' }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">
+              <div>
+                <h2 className="text-sm font-bold text-stone-900">Week Insights</h2>
+                <p className="text-xs text-stone-400 mt-0.5">
+                  {doneTasks} of {totalTasks} task{totalTasks !== 1 ? 's' : ''} completed · {weekPct}%
+                </p>
+              </div>
+              <button
+                onClick={() => setShowInsights(false)}
+                className="rounded-xl p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Overall ring */}
+            <div className="flex items-center gap-4 px-5 py-4 border-b border-stone-50">
+              <div className="relative shrink-0">
+                <svg width="56" height="56" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r={ringR} fill="none" stroke="#F4F4F5" strokeWidth="6"/>
+                  <circle
+                    cx="32" cy="32" r={ringR} fill="none"
+                    stroke={ringColor} strokeWidth="6" strokeLinecap="round"
+                    strokeDasharray={ringCirc} strokeDashoffset={ringOffset}
+                    transform="rotate(-90 32 32)"
+                    style={{ transition: 'stroke-dashoffset 0.4s ease' }}
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-stone-800">
+                  {weekPct}%
+                </span>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-stone-800 leading-none">
+                  {doneTasks}
+                  <span className="text-sm font-normal text-stone-400"> / {totalTasks}</span>
+                </p>
+                <p className="text-xs text-stone-400 mt-1">tasks done this week</p>
+                {weekPct === 100 && totalTasks > 0 && (
+                  <p className="text-xs font-semibold mt-1" style={{ color: '#22C55E' }}>🎉 Perfect week!</p>
+                )}
+              </div>
+            </div>
+
+            {/* Per-day breakdown */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-stone-400 mb-3">Daily breakdown</p>
+              {DAYS.map(day => {
+                const a         = DAY_ACCENT[day];
+                const dayGoals  = goals.filter(g => g.day === day);
+                const dayGoog   = googleEvents.filter(e => e.date === weekDates[day]);
+                const t = dayGoals.length + dayGoog.length;
+                const d = dayGoals.filter(g => g.completed).length + dayGoog.filter(e => !!e.completed).length;
+                const pct = t === 0 ? 0 : Math.round((d / t) * 100);
+                return (
+                  <div key={day}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ background: a.color }}/>
+                        <span className="text-xs font-medium text-stone-700">{a.label}</span>
+                      </div>
+                      <span className="text-xs text-stone-400">
+                        {t === 0 ? '—' : `${d}/${t} · ${pct}%`}
+                      </span>
+                    </div>
+                    {t > 0 && (
+                      <div className="h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%`, background: a.color }}
+                        />
+                      </div>
+                    )}
+                    {t === 0 && (
+                      <div className="h-1.5 w-full rounded-full bg-stone-100"/>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
