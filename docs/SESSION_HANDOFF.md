@@ -2,76 +2,76 @@
 
 _Purpose: enough context to resume development cold. Update at the end of each working session._
 
-## As of: 2026-06-19 (UI redesign: week navigator + sidebar panels + navbar chevron)
+## As of: 2026-06-22 (WeeklyBoard improvements + FamilyWeeklyBoard extraction)
 
 ## Recent work completed
 
-0. **This Week tab UI redesign** (matching reference mockup, 2026-06-19):
-   - **Week navigator**: replaced static "Week X · YEAR" pill with `< 📅 Week of Jun 15 – Jun 21, 2026 >` prev/next navigation. State is a `weekStart` Date object; navigating re-fetches weekly goals via `viewWeek`/`viewYear` derived values. The share panel continues to show the current week's items (not the navigated week).
-   - **Sidebar panels** (`components/WeeklyBoard.tsx`): new right-side `xl:flex` sidebar with two cards: **Week Overview** (SVG donut progress ring, "X of Y tasks completed", day-colored dots, "View insights >" button) and **Quick Add** (text input + "Add Task" button that adds to today's day-of-week in the viewed week).
-   - **Layout**: WeeklyBoard now uses `flex gap-3 items-start` with the day cards grid (`flex-1`) plus a `w-56 hidden xl:flex` sidebar column. Day card grid retains `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`.
-   - **Tip bar**: dismissable banner below WeeklyBoard ("💡 Tip: Click the day cards to add tasks, or use Quick Add in the sidebar").
-   - **Navbar**: username now shows with a ▼ chevron and is clickable (opens dropdown, same as avatar). Active mode tab (`My Space`/`Family`) has a purple `border-b-2` underline indicator in addition to the white card.
-   - Build verified clean: TypeScript strict + all routes compiled.
+0. **WeeklyBoard improvements** (Self mode, multiple commits 2026-06-19):
+   - **+ icon submit on day cards** (commit `998ba41`): removed the separate "Add" text button; the input now shows a `+` icon on the right as the only submit control. Clicking or pressing Enter adds the task. Button dims to 30% opacity when input is empty. Clicking empty space in the task list area focuses that day's input (click-to-focus).
+   - **Recurring Quick Add** (commit `d776b38`): Quick Add sidebar now has day-of-week toggles (Mo Tu We Th Fr Sa Su) below the task name field. Today's day is pre-selected. Toggling additional days makes the add recurring. At least one day stays selected. `Promise.all` creates one goal per selected day, mapped to the correct ISO date for the viewed week.
+   - **Insights drawer** (commit `56c8f55`): "View insights >" button in the Week Overview sidebar card now opens a slide-in drawer. The drawer shows the overall donut ring, total done/total count, and a per-day breakdown with colored progress bars and completion percentages. Clicking the backdrop or X closes it.
 
-1. **Security hardening** (ADR-013 + ADR-014):
-   - `lib/password.ts` — scrypt password hashing (`node:crypto`, N=16384, r=8, p=1). Format: `scrypt$<saltHex>$<hashHex>`. No new dependency.
-   - `lib/auth-guard.ts` — `requireUserId`, `assertFamilyMember`, `assertOwnership` helpers. All server actions now validate session identity server-side; client-supplied IDs are overridden or verified.
-   - `lib/actions/auth.ts` — `register` hashes; `login` verifies + auto-upgrades legacy plaintext rows on success; `getCurrentUser` column-selects to exclude `password`.
-   - `lib/types.ts` — `password` removed from `User` interface (never sent to client).
-   - All action files (`todos`, `goals`, `events`, `shopping`, `meals`, `family`) hardened with session-based ownership checks. Signatures unchanged; client call sites untouched.
-   - `lib/store.ts` deleted — was dead legacy code (ADR-001) that started failing the TypeScript build after the `User` type cleanup.
-   - Build verified clean: TypeScript strict + all routes compiled.
+1. **FamilyWeeklyBoard component extracted** (commit `5af873a`):
+   - New file `components/FamilyWeeklyBoard.tsx` extracted from `app/dashboard/family/page.tsx`.
+   - Family Tasks tab now uses `FamilyWeeklyBoard` instead of inline day-card rendering.
+   - `FamilyWeeklyBoard` has the same feature set as the Self-mode `WeeklyBoard`: week navigator (`< 📅 Week of … >`), sidebar with Week Overview + Quick Add (recurring day toggles), and Insights drawer.
+   - `app/dashboard/family/page.tsx` was substantially simplified — day-card rendering logic moved into the component.
 
-2. **Premium redesign** (commit `fe1cf89`) — full visual overhaul to a warm-violet design system:
-   - New global color system in `app/globals.css` (background `#FAFAF8`, `red-*` remapped to violet `#7C5CFC` — see ADR-011).
-   - Rewrote `Navbar`, `login`, `register`, `WeeklyBoard`, `TodoList`, `GoalList`, `MealPlan`, `ProgressStats`, and both dashboard pages (`self`, `family`).
-   - Self "Today" tab: circular progress ring, 2×2 stats grid, task composer, split upcoming/completed, `TodayTaskCard`, FAB.
-   - Family page: member avatar cluster header, invite panel, day cards with colored left borders.
-2. **Build fixes**:
-   - `login`/`register` switched to real `<form onSubmit>` + `type="submit"` (ADR-012).
-   - `app/dashboard/self/page.tsx`: `user.familyId` → `user?.familyId` in `handleShareToggle` (TS null-narrowing in closure).
-   - `app/api/google/callback/route.ts`: added `export const dynamic = 'force-dynamic'` to stop a build-time `URL_INVALID` crash (ADR-009, commit `1c077ff`).
-3. **Project documentation** created under `docs/` (commit `cd40cdf`): PROJECT_OVERVIEW, ARCHITECTURE, DATABASE_SCHEMA, FEATURE_STATUS, DECISIONS, SESSION_HANDOFF, CODEBASE_MAP.
-4. **Vercel verified**: production domain is `https://family-planner-app-buwf.vercel.app`; latest git-triggered deploy is **Ready**. `NEXT_PUBLIC_APP_URL` corrected to that domain via the dashboard.
-5. **`CLAUDE.md` working guide** added and expanded (commits `7fd9d49`, `82d2737`, `41f00fc`, `289904d`): project understanding, session-start reading order (§2), doc-maintenance rules, session-closing checklist, coding standards, architecture principles, feature lifecycle (§7 plan→approve→implement), long-session checkpointing (§8), pre-merge review (§9), commit message convention (§10).
-6. **`.gitignore`**: `app/simulate` (local demo harness) is now ignored (commit `7b8137b`).
-7. **`npm run build` passes clean** (all routes compiled, TypeScript OK) — last verified at this session close.
+2. **Progress tab removed from Self mode** (commit `c71f937`):
+   - The standalone Progress tab (`ProgressStats` component) was removed from `app/dashboard/self/page.tsx`.
+   - Progress stats (circular ring) remain embedded in the **Today** tab.
+   - Self mode now has 4 tabs: Today, This Week, Year Goals, Reminders.
 
-## Files changed recently (UI redesign session, 2026-06-19)
-- `components/WeeklyBoard.tsx` — sidebar layout, Week Overview + Quick Add cards, `onQuickAdd` prop
-- `components/Navbar.tsx` — username chevron + clickable, active-tab purple underline
-- `app/dashboard/self/page.tsx` — week navigation state (`weekStart`), `viewWeek`/`viewYear`, `viewedWeekGoogleEvents`, `dismissedTip`, week navigator UI, tip bar
+3. **This Week tab UI redesign** (commit `fd90554`, 2026-06-19):
+   - Week navigator, sidebar panels (Week Overview + Quick Add), tip bar, Navbar username chevron + active-tab underline.
+   - Build verified clean at that point.
 
-## Files changed previously (security hardening session)
-- `lib/password.ts` (new — scrypt hashing)
-- `lib/auth-guard.ts` (new — session guards)
-- `lib/actions/auth.ts` (hash on register, verify+upgrade on login, strip password from getCurrentUser)
-- `lib/types.ts` (remove `password` from `User`)
-- `lib/actions/todos.ts`, `goals.ts`, `events.ts`, `shopping.ts`, `meals.ts`, `family.ts` (per-action authz)
-- `lib/store.ts` (deleted — dead localStorage legacy)
-- `docs/DECISIONS.md`, `FEATURE_STATUS.md`, `CODEBASE_MAP.md`, `DATABASE_SCHEMA.md`, `SESSION_HANDOFF.md`
+4. **Security hardening** (ADR-013 + ADR-014, commit `24882a1`):
+   - `lib/password.ts` — scrypt hashing. `lib/auth-guard.ts` — session guards on all actions.
+   - `lib/store.ts` deleted (dead localStorage legacy).
 
-Prior redesign session touched: `app/globals.css`, `app/login/page.tsx`, `app/register/page.tsx`, `app/dashboard/self/page.tsx`, `app/dashboard/family/page.tsx`, `app/api/google/callback/route.ts`, `components/{Navbar,WeeklyBoard,TodoList,GoalList,MealPlan,ProgressStats,ShoppingList}.tsx`, `lib/actions/shopping.ts`.
+5. **Premium redesign** (commit `fe1cf89`) — warm-violet design system.
+
+## Files changed recently
+
+**WeeklyBoard / FamilyWeeklyBoard session (2026-06-19):**
+- `components/WeeklyBoard.tsx` — + icon submit, recurring day toggles, Insights drawer
+- `components/FamilyWeeklyBoard.tsx` — new file (extracted from family page)
+- `app/dashboard/self/page.tsx` — removed Progress tab
+- `app/dashboard/family/page.tsx` — simplified; delegates Tasks tab to `FamilyWeeklyBoard`
+
+**This Week redesign session (2026-06-19):**
+- `components/WeeklyBoard.tsx` — sidebar layout, week navigator, Week Overview + Quick Add cards
+- `components/Navbar.tsx` — username chevron, active-tab purple underline
+- `app/dashboard/self/page.tsx` — week navigation state, tip bar
+
+**Security hardening session:**
+- `lib/password.ts` (new), `lib/auth-guard.ts` (new)
+- `lib/actions/auth.ts`, `lib/types.ts`
+- `lib/actions/todos.ts`, `goals.ts`, `events.ts`, `shopping.ts`, `meals.ts`, `family.ts`
+- `lib/store.ts` (deleted)
 
 ## Current state / blockers
 
-- **Production domain:** `https://family-planner-app-buwf.vercel.app` (the clean `family-planner-app-buwf.vercel.app` alias → current `git-main` production deployment).
-- **Deployment is automatic via Vercel's Git integration.** Every push to `main` triggers a production deploy — do **not** run `vercel deploy --prod` manually. Latest production deploy is **Ready** and current.
-  - Earlier a build failed during "Collecting page data": the Google callback route was statically evaluated with no Turso URL → `LibsqlError: URL_INVALID`. Fixed via `force-dynamic` (committed) and by adding env vars; subsequent git-triggered deploys are green.
-  - **All 10 environment variables are set in the Vercel project (production scope)**: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TOKEN_ENC_KEY`, `BREVO_SMTP_LOGIN`, `BREVO_SMTP_PASSWORD`, `BREVO_API_KEY`, `NEXT_PUBLIC_APP_URL`. New/changed env vars only take effect on the **next** deploy (a push, or the dashboard "Redeploy" button) — they do not apply retroactively. `NEXT_PUBLIC_APP_URL` in particular is inlined at build time.
-  - ✅ `NEXT_PUBLIC_APP_URL` corrected (via Vercel dashboard) to `https://family-planner-app-buwf.vercel.app`. (It had briefly been set to a guessed `flax` domain that didn't exist.) This drives the OAuth `redirect_uri`.
+- **Production domain:** `https://family-planner-app-buwf.vercel.app` (auto-deploys on push to `main`).
+- **Deployment is automatic via Vercel's Git integration.** Do **not** run `vercel deploy --prod` manually.
+- **All 10 environment variables set in Vercel project (production scope):** `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TOKEN_ENC_KEY`, `BREVO_SMTP_LOGIN`, `BREVO_SMTP_PASSWORD`, `BREVO_API_KEY`, `NEXT_PUBLIC_APP_URL`.
+- **Google OAuth redirect URI** (`https://family-planner-app-buwf.vercel.app/api/google/callback`) must be whitelisted in Google Cloud console for production login to work.
 
 ## Next tasks (in order)
 
-1. **Whitelist the production OAuth redirect URI** (`https://family-planner-app-buwf.vercel.app/api/google/callback`) in the Google Cloud console, or Google login will fail in prod.
-2. **Smoke test in prod:** register/login, create a family, add todos/shopping items, send a shopping email, connect+sync Google Calendar. Verify existing users are migrated (password field becomes `scrypt$…` on next login).
-3. **Remaining tech debt:** no DB foreign keys; client-side-only auth gate (dashboard layout redirects in `useEffect` — could be replaced with Next.js middleware for server-side enforcement).
+1. **Whitelist the production OAuth redirect URI** in Google Cloud console if not yet done.
+2. **Smoke test in prod:** register/login, create a family, add todos/shopping items, send a shopping email, connect+sync Google Calendar.
+3. **Family mode parity:** verify FamilyWeeklyBoard's Quick Add writes goals/todos to the correct family scope and appears for all family members.
+4. **Remaining tech debt:** no DB foreign keys; client-side-only auth gate in `dashboard/layout.tsx` (could be replaced with Next.js middleware).
 
 ## Context needed to resume
+
 - Read `ARCHITECTURE.md` and `CODEBASE_MAP.md` first.
 - Auth is iron-session cookie (`fp_session`); current user is shared via `UserContext` (ADR-007).
 - `red-*` Tailwind classes render **violet** by design (ADR-011) — not a bug.
-- `lib/store.ts` is dead legacy code — ignore it (ADR-001).
+- `lib/store.ts` is deleted — do not reference it (ADR-001).
 - Google tokens are AES-GCM encrypted; **never change `TOKEN_ENC_KEY`** (ADR-004/010).
+- Self mode tabs: Today, This Week, Year Goals, Reminders (no separate Progress tab).
+- `FamilyWeeklyBoard` (`components/FamilyWeeklyBoard.tsx`) is the Family Tasks tab component; it mirrors the Self-mode `WeeklyBoard` feature set.
 - Secrets live in `.env.local` locally and in Vercel project env for prod.

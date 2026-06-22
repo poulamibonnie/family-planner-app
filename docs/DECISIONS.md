@@ -60,12 +60,11 @@ Each entry: decision, context, rationale, and consequences. Newest concerns firs
 **Decision:** Load the user once in `app/dashboard/layout.tsx` and provide it via `UserContext` (`lib/user-context.ts`); pages consume `useUser()`.
 **Consequences:** Smooth mode switching; pages assume a non-null user inside the dashboard. (Commit `263da4d`.)
 
-## ADR-008 — (Known debt) Plaintext password storage
-**Status:** Accepted-with-debt ⚠️
-**Context:** Auth was built quickly for the prototype.
-**Decision (current):** Store and compare passwords as plaintext in `users.password`.
-**Rationale:** Expedience during prototyping.
-**Consequences:** **Critical security gap.** Must be replaced with a salted hash (bcrypt/argon2) before any real-user launch. Tracked in `FEATURE_STATUS.md`.
+## ADR-008 — (Superseded) Plaintext password storage
+**Status:** Superseded by ADR-013
+**Context:** Auth was built quickly for the prototype. Passwords were stored and compared as plaintext.
+**Decision (superseded):** Store and compare passwords as plaintext in `users.password`.
+**Resolution:** Replaced by scrypt hashing in ADR-013. Existing plaintext rows are auto-upgraded on first successful login.
 
 ## ADR-009 — Force the Google callback route to be dynamic
 **Status:** Accepted

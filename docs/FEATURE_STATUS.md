@@ -2,7 +2,7 @@
 
 Legend: ✅ Complete · 🟡 In progress · 🔵 Planned · ⛔ Blocked · ⚠️ Needs attention
 
-_Last updated: 2026-06 (security: password hashing + per-action authorization)_
+_Last updated: 2026-06 (WeeklyBoard improvements + FamilyWeeklyBoard extraction)_
 
 ## ✅ Completed
 
@@ -13,7 +13,7 @@ _Last updated: 2026-06 (security: password hashing + per-action authorization)_
 | Daily to-do list | Date-scoped; add/toggle/delete; split pending/completed |
 | Weekly goal board | Day × week grid, per-day color accents |
 | Yearly goals | |
-| Progress stats | Day/week/month/year roll-ups with circular progress ring |
+| Progress stats | Circular progress ring + per-category bars embedded in the **Today** tab. Standalone Progress tab removed; per-day progress now in the WeeklyBoard Insights drawer. |
 | Calendar events | Create, complete, delete; browser + email reminders |
 | Google Calendar OAuth | Connect, disconnect, encrypted token storage |
 | Google Calendar sync | Manual + auto-on-login; current-week events upserted |
@@ -25,6 +25,8 @@ _Last updated: 2026-06 (security: password hashing + per-action authorization)_
 | Share self items → family | Todos, goals, events via `shared_to_family_at` |
 | Emergency contacts | Stored as JSON on family |
 | Premium redesign | Warm-violet design system across all UI (commit `fe1cf89`) |
+| WeeklyBoard sidebar + week navigator | Right-side sidebar with Week Overview (donut ring) and Quick Add; `< 📅 Week of … >` navigation; Insights slide-in drawer (per-day breakdown, colored progress bars); recurring day-of-week toggles in Quick Add (Mo–Su, today pre-selected, Promise.all creates one goal per selected day); + icon submit on day cards with click-to-focus. |
+| FamilyWeeklyBoard component | Extracted from `family/page.tsx` into `components/FamilyWeeklyBoard.tsx`; family Tasks tab now has the same week navigator, sidebar, Insights drawer, and recurring Quick Add as Self mode. |
 | Vercel production build fixes | Lazy crypto key init, `force-dynamic` callback route |
 
 ## 🟡 In Progress

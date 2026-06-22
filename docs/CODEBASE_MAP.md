@@ -23,8 +23,8 @@ A directory-by-directory guide to the repository. Paths are relative to the proj
 | `app/register/page.tsx` | Registration form (server action `register`). |
 | `app/dashboard/layout.tsx` | **Auth gate**: loads current user, redirects to `/login` if absent, renders `Navbar`, provides `UserContext`. |
 | `app/dashboard/page.tsx` | Dashboard entry/redirect. |
-| `app/dashboard/self/page.tsx` | **Self mode** — the largest page. Tabs: Today (progress ring + stats + composer + task cards + FAB), This Week (`WeeklyBoard`), Year Goals (`GoalList`), Reminders (`Reminders`), Progress (`ProgressStats`). Also hosts the "Share with Family" slide-in panel and Google connect/sync header buttons. Contains the local `TodayTaskCard` component. |
-| `app/dashboard/family/page.tsx` | **Family mode** — member avatar cluster header, info/invite panel, tabs: Tasks (day cards), Shopping (`ShoppingList`), Meals (`MealPlan`), Reminders, Details (`FamilyManager`). |
+| `app/dashboard/self/page.tsx` | **Self mode** — the largest page. Tabs: Today (progress ring + stats + composer + task cards + FAB), This Week (`WeeklyBoard`), Year Goals (`GoalList`), Reminders (`Reminders`). Also hosts the "Share with Family" slide-in panel and Google connect/sync header buttons. Contains the local `TodayTaskCard` component. Progress stats are now embedded in the Today tab; the standalone Progress tab was removed. |
+| `app/dashboard/family/page.tsx` | **Family mode** — member avatar cluster header, info/invite panel, tabs: Tasks (`FamilyWeeklyBoard`), Shopping (`ShoppingList`), Meals (`MealPlan`), Reminders, Details (`FamilyManager`). |
 | `app/api/google/callback/route.ts` | Google OAuth **Route Handler**. Exchanges code, stores encrypted tokens, redirects back. Marked `force-dynamic` (ADR-009). |
 | `app/simulate/shopping/page.tsx` | Standalone simulation/demo harness for the shopping list (not part of the auth'd app). |
 
@@ -32,8 +32,9 @@ A directory-by-directory guide to the repository. Paths are relative to the proj
 
 | File | Purpose |
 |---|---|
-| `Navbar.tsx` | Top bar: logo, Self/Family mode toggle, avatar dropdown (edit name, disconnect Google, sign out). |
-| `WeeklyBoard.tsx` | Weekly goal grid with per-day color accents (`DAY_ACCENT`), today highlight, progress badges. |
+| `Navbar.tsx` | Top bar: logo, Self/Family mode toggle, avatar dropdown (edit name, disconnect Google, sign out). Username shows ▼ chevron; active mode tab has violet `border-b-2` underline. |
+| `WeeklyBoard.tsx` | **Self mode** weekly goal grid. Per-day color accents (`DAY_ACCENT`), today highlight, + icon submit on day cards (click-to-focus), week navigator (`< 📅 Week of … >`), right sidebar with **Week Overview** (SVG donut ring, "View insights" slide-in drawer) and **Quick Add** (recurring day-of-week toggles — Mo/Tu/We/Th/Fr/Sa/Su, today pre-selected, creates one goal per selected day). |
+| `FamilyWeeklyBoard.tsx` | **Family mode** equivalent of `WeeklyBoard`. Shares todo + event data for the family. Same week navigator, sidebar (Week Overview + Quick Add with recurring day toggles), and Insights drawer. Extracted from `app/dashboard/family/page.tsx`. |
 | `TodoList.tsx` | Generic todo list with custom add form, circular checkbox, split pending/completed. |
 | `GoalList.tsx` | Goal list with numbered accent badges; used for yearly goals. Accent palette includes `violet`/`amber`. |
 | `MealPlan.tsx` | Weekly meal grid (day × breakfast/lunch/dinner); week nav; inline cell editing; saves via `meals` actions. |

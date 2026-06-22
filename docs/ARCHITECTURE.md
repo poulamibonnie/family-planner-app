@@ -70,7 +70,7 @@ All write actions mutate the database directly via Drizzle. There is no separate
 - Encrypted with `SESSION_SECRET`.
 - `getCurrentUser()` reads the session and loads the user row.
 - The dashboard layout (`app/dashboard/layout.tsx`) gates access client-side: if `getCurrentUser()` returns null it redirects to `/login`.
-- ⚠️ **Passwords are currently stored and compared in plaintext** (`auth.ts`). See ADR-008 / `FEATURE_STATUS.md` — this is a known security gap.
+- Passwords are hashed with scrypt (`lib/password.ts`, ADR-013). Existing plaintext rows are auto-upgraded on the next successful login.
 
 ## Integrations & Services
 
@@ -102,4 +102,4 @@ Connect → tokens stored encrypted → `syncGoogleCalendar()` (manual button or
 `createFamily()` generates a 6-char invite code and seeds `memberIds` with the creator. `joinFamily(code)` appends the user. `memberIds` is stored as a JSON-encoded string column and parsed on read (`toFamily()`).
 
 ## Notable Legacy / Dead Code
-- `lib/store.ts` is a complete **localStorage-based** implementation of the entire data layer (users, families, todos, goals, shopping, meals, events). It predates the Turso migration and is **no longer imported anywhere** (verified by grep). It is retained for reference but should be considered dead. See ADR-001.
+- `lib/store.ts` was the localStorage-based data layer from before the Turso migration. It is now **deleted** (ADR-001, removed in the security-hardening session alongside the `User` type cleanup).

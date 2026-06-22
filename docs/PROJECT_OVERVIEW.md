@@ -21,7 +21,7 @@ Families of 2–6 members who want a single shared tool to replace ad-hoc messag
 | Daily to-do list (date-scoped) | Self | ✅ Live |
 | Weekly goal board (day × week grid) | Self / Family | ✅ Live |
 | Yearly goals | Self | ✅ Live |
-| Progress stats (day / week / month / year) | Self | ✅ Live |
+| Progress stats (circular ring + per-day insights) | Self | ✅ Live |
 | Calendar events + browser/email reminders | Self / Family | ✅ Live |
 | Google Calendar OAuth + sync | Self | ✅ Live |
 | Family creation / join by code | Family | ✅ Live |
