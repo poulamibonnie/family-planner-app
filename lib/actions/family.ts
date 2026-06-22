@@ -81,6 +81,13 @@ export async function getFamilyMembers(familyId: string): Promise<User[]> {
   return rows as User[];
 }
 
+export async function updateFamilyName(familyId: string, name: string): Promise<void> {
+  await assertFamilyMember(familyId);
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  await db.update(families).set({ name: trimmed }).where(eq(families.id, familyId));
+}
+
 export async function updateFamilyPhoto(familyId: string, photoUrl: string | null): Promise<void> {
   await assertFamilyMember(familyId);
   await db.update(families).set({ photoUrl }).where(eq(families.id, familyId));

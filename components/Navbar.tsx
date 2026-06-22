@@ -8,9 +8,9 @@ import { logout as logoutAction } from '@/lib/actions/auth';
 import { updateUser } from '@/lib/actions/family';
 import { getGoogleConnection, disconnectGoogle } from '@/lib/actions/google';
 
-interface Props { user: User; }
+interface Props { user: User; onNameChange?: (name: string) => void; }
 
-export default function Navbar({ user }: Props) {
+export default function Navbar({ user, onNameChange }: Props) {
   const pathname = usePathname();
   const router   = useRouter();
   const isSelf   = pathname.startsWith('/dashboard/self');
@@ -58,6 +58,7 @@ export default function Navbar({ user }: Props) {
     if (!trimmed) return;
     await updateUser(user.id, { name: trimmed });
     setDisplayName(trimmed);
+    onNameChange?.(trimmed);
     setEditing(false);
     setShowMenu(false);
   }

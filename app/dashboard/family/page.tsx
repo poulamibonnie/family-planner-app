@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getFamilyById, getFamilyMembers, updateFamilyEmergencyContacts } from '@/lib/actions/family';
+import { getFamilyById, getFamilyMembers, updateFamilyName, updateFamilyEmergencyContacts } from '@/lib/actions/family';
 import { getFamilyAllTodos, addTodo, toggleTodo, deleteTodo } from '@/lib/actions/todos';
 import { getFamilyShoppingItems, addShoppingItem, toggleShoppingItem, deleteShoppingItem, clearAllShoppingItems, clearCompletedShoppingItems } from '@/lib/actions/shopping';
 import { getFamilyEvents, toggleCalendarEvent } from '@/lib/actions/events';
@@ -42,11 +42,13 @@ export default function FamilyPage() {
   const [shopping,    setShopping]    = useState<ShoppingItem[]>([]);
   const [events,      setEvents]      = useState<CalendarEvent[]>([]);
   const [members,     setMembers]     = useState<User[]>([]);
-  const [codeCopied,  setCodeCopied]  = useState(false);
-  const [dismissedTip, setDismissedTip] = useState(false);
-  const [contacts,      setContacts]      = useState<EmergencyContact[]>([]);
-  const [addingContact, setAddingContact] = useState(false);
-  const [contactForm,   setContactForm]   = useState({ name: '', relationship: '', phone: '' });
+  const [codeCopied,        setCodeCopied]        = useState(false);
+  const [dismissedTip,      setDismissedTip]      = useState(false);
+  const [editingFamilyName, setEditingFamilyName] = useState(false);
+  const [familyNameInput,   setFamilyNameInput]   = useState('');
+  const [contacts,          setContacts]          = useState<EmergencyContact[]>([]);
+  const [addingContact,     setAddingContact]     = useState(false);
+  const [contactForm,       setContactForm]       = useState({ name: '', relationship: '', phone: '' });
 
   const today = todayISO();
   const week  = getWeekNumber();
@@ -92,6 +94,15 @@ export default function FamilyPage() {
         <FamilyManager user={user} family={undefined} onFamilyChange={load} />
       </div>
     );
+  }
+
+  async function saveFamilyName(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = familyNameInput.trim();
+    if (!trimmed || trimmed === family!.name) { setEditingFamilyName(false); return; }
+    await updateFamilyName(family!.id, trimmed);
+    setFamily(prev => prev ? { ...prev, name: trimmed } : prev);
+    setEditingFamilyName(false);
   }
 
   async function saveContacts(updated: EmergencyContact[]) {
@@ -142,7 +153,50 @@ export default function FamilyPage() {
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-stone-900 leading-tight tracking-tight">{family.name}</h1>
+            {editingFamilyName ? (
+              <form onSubmit={saveFamilyName} className="flex items-center gap-2">
+                <input
+                  autoFocus
+                  value={familyNameInput}
+                  onChange={e => setFamilyNameInput(e.target.value)}
+                  className="text-2xl font-bold text-stone-900 leading-tight tracking-tight border-b-2 bg-transparent outline-none w-44"
+                  style={{ borderColor: '#7C5CFC' }}
+                />
+                <button
+                  type="submit"
+                  className="rounded-lg p-1.5 text-white transition active:scale-95"
+                  style={{ background: 'linear-gradient(135deg, #7C5CFC, #6B4EE6)' }}
+                  title="Save"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+                    <path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingFamilyName(false)}
+                  className="rounded-lg p-1.5 text-stone-400 hover:bg-stone-100 hover:text-stone-600 transition"
+                  title="Cancel"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+                    <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-1.5 group">
+                <h1 className="text-2xl font-bold text-stone-900 leading-tight tracking-tight">{family.name}</h1>
+                <button
+                  onClick={() => { setFamilyNameInput(family.name); setEditingFamilyName(true); }}
+                  className="opacity-0 group-hover:opacity-100 transition rounded-lg p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-600"
+                  title="Edit family name"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none">
+                    <path d="M11.5 2.5l2 2-8 8H3.5v-2l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            )}
             <p className="text-xs text-stone-400 mt-0.5">{members.length} member{members.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
