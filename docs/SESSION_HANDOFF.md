@@ -2,11 +2,17 @@
 
 _Purpose: enough context to resume development cold. Update at the end of each working session._
 
-## As of: 2026-06-22 (Password reset flow)
+## As of: 2026-06-22 (Name editing + password reset)
 
 ## Recent work completed
 
-0. **Password reset flow** (2026-06-22):
+0. **User and family name editing** (2026-06-22, commit `62bab9e`):
+   - New `updateFamilyName(familyId, name)` server action in `lib/actions/family.ts` (guarded by `assertFamilyMember`).
+   - `app/dashboard/layout.tsx` now passes `onNameChange` callback to Navbar; when the user saves a new display name, the callback patches the `user` state held in the `UserContext.Provider`, so all consumers (including the Self-mode greeting) update immediately without a page reload.
+   - `components/Navbar.tsx` — accepts `onNameChange` prop; calls it after `updateUser` succeeds.
+   - `app/dashboard/family/page.tsx` — hover the family name heading to reveal a pencil ✏️ icon; click to enter an inline edit mode (input + save/cancel). Saving calls `updateFamilyName` and patches local `family` state so the heading, info panel, and all `family.name` references update instantly.
+
+1. **Password reset flow** (2026-06-22, commit `28c103a`):
    - New `password_reset_tokens` table in `lib/schema.ts` + migration `drizzle/0006_next_scorpion.sql`.
    - `requestPasswordReset(email)` and `resetPassword(token, newPassword)` added to `lib/actions/auth.ts`. Token is a 32-byte random value; only its SHA-256 hash is stored. Expiry 1 hour, single-use. Email sent via Brevo. No email enumeration (always silent on unknown address).
    - New pages: `app/forgot-password/page.tsx` (email entry) and `app/reset-password/page.tsx` (new password entry, reads `?token=` via `useSearchParams` in a `Suspense` boundary).
@@ -40,6 +46,12 @@ _Purpose: enough context to resume development cold. Update at the end of each w
 5. **Premium redesign** (commit `fe1cf89`) — warm-violet design system.
 
 ## Files changed recently
+
+**Name editing session (2026-06-22):**
+- `lib/actions/family.ts` — added `updateFamilyName`
+- `app/dashboard/layout.tsx` — added `onNameChange` callback to Navbar
+- `components/Navbar.tsx` — added `onNameChange` prop, calls it after save
+- `app/dashboard/family/page.tsx` — inline family name edit UI
 
 **Password reset session (2026-06-22):**
 - `lib/schema.ts` — added `passwordResetTokens` table
@@ -75,8 +87,9 @@ _Purpose: enough context to resume development cold. Update at the end of each w
 
 ## Next tasks (in order)
 
-1. **Smoke test password reset in prod:** request reset for a real account, receive email, click link, set new password, login.
-2. **Whitelist the production OAuth redirect URI** in Google Cloud console if not yet done.
+1. **Smoke test name editing in prod:** change display name → verify Self-mode greeting updates; rename family → verify heading updates.
+2. **Smoke test password reset in prod:** request reset for a real account, receive email, click link, set new password, login.
+3. **Whitelist the production OAuth redirect URI** in Google Cloud console if not yet done.
 2. **Smoke test in prod:** register/login, create a family, add todos/shopping items, send a shopping email, connect+sync Google Calendar.
 3. **Family mode parity:** verify FamilyWeeklyBoard's Quick Add writes goals/todos to the correct family scope and appears for all family members.
 4. **Remaining tech debt:** no DB foreign keys; client-side-only auth gate in `dashboard/layout.tsx` (could be replaced with Next.js middleware).

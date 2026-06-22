@@ -2,7 +2,7 @@
 
 Legend: ✅ Complete · 🟡 In progress · 🔵 Planned · ⛔ Blocked · ⚠️ Needs attention
 
-_Last updated: 2026-06-22 (Password reset flow added)_
+_Last updated: 2026-06-22 (Password reset + name editing)_
 
 ## ✅ Completed
 
@@ -29,6 +29,7 @@ _Last updated: 2026-06-22 (Password reset flow added)_
 | FamilyWeeklyBoard component | Extracted from `family/page.tsx` into `components/FamilyWeeklyBoard.tsx`; family Tasks tab now has the same week navigator, sidebar, Insights drawer, and recurring Quick Add as Self mode. |
 | Vercel production build fixes | Lazy crypto key init, `force-dynamic` callback route |
 | Password reset flow | Email-based reset via Brevo. "Forgot password?" on login → `/forgot-password` → reset email → `/reset-password?token=…` → new password. Token: SHA-256-hashed 32-byte random, 1-hour expiry, single-use. ADR-015. |
+| User and family name editing | Display name editable via Navbar dropdown (Self mode greeting updates instantly via UserContext). Family name editable via pencil icon on Family mode header (inline input, local state patch). |
 
 ## 🟡 In Progress
 
