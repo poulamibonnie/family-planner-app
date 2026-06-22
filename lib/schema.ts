@@ -99,3 +99,12 @@ export const googleConnections = sqliteTable('google_connections', {
   calendarId:   text('calendar_id').notNull(),
   createdAt:    text('created_at').notNull(),
 });
+
+export const passwordResetTokens = sqliteTable('password_reset_tokens', {
+  id:        text('id').primaryKey(),
+  userId:    text('user_id').notNull(),
+  tokenHash: text('token_hash').notNull(),
+  expiresAt: text('expires_at').notNull(),
+  used:      integer('used', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').notNull(),
+});

@@ -2,7 +2,7 @@
 
 Legend: ✅ Complete · 🟡 In progress · 🔵 Planned · ⛔ Blocked · ⚠️ Needs attention
 
-_Last updated: 2026-06 (WeeklyBoard improvements + FamilyWeeklyBoard extraction)_
+_Last updated: 2026-06-22 (Password reset flow added)_
 
 ## ✅ Completed
 
@@ -28,6 +28,7 @@ _Last updated: 2026-06 (WeeklyBoard improvements + FamilyWeeklyBoard extraction)
 | WeeklyBoard sidebar + week navigator | Right-side sidebar with Week Overview (donut ring) and Quick Add; `< 📅 Week of … >` navigation; Insights slide-in drawer (per-day breakdown, colored progress bars); recurring day-of-week toggles in Quick Add (Mo–Su, today pre-selected, Promise.all creates one goal per selected day); + icon submit on day cards with click-to-focus. |
 | FamilyWeeklyBoard component | Extracted from `family/page.tsx` into `components/FamilyWeeklyBoard.tsx`; family Tasks tab now has the same week navigator, sidebar, Insights drawer, and recurring Quick Add as Self mode. |
 | Vercel production build fixes | Lazy crypto key init, `force-dynamic` callback route |
+| Password reset flow | Email-based reset via Brevo. "Forgot password?" on login → `/forgot-password` → reset email → `/reset-password?token=…` → new password. Token: SHA-256-hashed 32-byte random, 1-hour expiry, single-use. ADR-015. |
 
 ## 🟡 In Progress
 

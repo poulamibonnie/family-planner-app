@@ -4,6 +4,12 @@ Each entry: decision, context, rationale, and consequences. Newest concerns firs
 
 ---
 
+## ADR-015 — Password reset tokens stored as SHA-256 hashes
+**Status:** Accepted
+**Context:** Users need a way to recover access when they forget their password. The reset flow requires a secret token to be sent via email and validated server-side.
+**Decision:** Generate a 32-byte cryptographically random token (`node:crypto randomBytes`). Store only `SHA-256(token)` in `password_reset_tokens.token_hash`. The raw token is placed in the reset link URL and is never written to the database. Tokens expire after 1 hour (`expires_at` ISO text), are single-use (`used` boolean), and existing unused tokens for a user are invalidated on each new request. The email is sent via the existing Brevo integration; if `BREVO_API_KEY` is absent the action returns silently (no error leak). The email and reset-link pages (`/forgot-password`, `/reset-password`) always show the same success message regardless of whether the email exists.
+**Consequences:** DB compromise does not expose usable raw tokens. The 256-bit token space makes brute-force infeasible. No rate limiting is implemented (tracked tech debt). Requires the `password_reset_tokens` table (migration `drizzle/0006_next_scorpion.sql`).
+
 ## ADR-014 — Per-action authorization via `lib/auth-guard.ts`
 **Status:** Accepted (supersedes the "thin authz" gap noted in ADR-002 and ADR-008)
 **Context:** All server actions previously trusted client-supplied user/family IDs. Any authenticated user could read or mutate another user's rows by passing a guessed ID.

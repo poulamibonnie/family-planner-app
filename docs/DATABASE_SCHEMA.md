@@ -127,6 +127,18 @@ Events — both locally created and Google-synced.
 | `shared_to_family_at` | text | yes | |
 | `created_at` | text | no | |
 
+## `password_reset_tokens`
+Time-limited tokens for the email-based password reset flow.
+
+| Column | Type | Null | Notes |
+|---|---|---|---|
+| `id` | text | PK | `generateId()` |
+| `user_id` | text | no | Owning user |
+| `token_hash` | text | no | SHA-256 of the raw token (hex); raw token is sent only in the email link |
+| `expires_at` | text | no | ISO timestamp; 1 hour from creation |
+| `used` | boolean | no | Default `false`; set to `true` on consumption (single-use) |
+| `created_at` | text | no | ISO timestamp |
+
 ## `google_connections`
 Per-user Google OAuth connection. One row per user.
 
@@ -149,6 +161,7 @@ users 1───* todos          (todos.user_id)
 users 1───* goals          (goals.user_id)
 users 1───* calendar_events(calendar_events.user_id)
 users 1───1 google_connections (google_connections.user_id, unique)
+users 1───* password_reset_tokens (password_reset_tokens.user_id)
 users *───1 families       (users.family_id  ↔  families.member_ids[] JSON)
 
 families 1───* shopping_items  (family_id)
