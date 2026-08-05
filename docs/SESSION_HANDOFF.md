@@ -2,6 +2,33 @@
 
 _Purpose: enough context to resume development cold. Update at the end of each working session._
 
+## As of: 2026-08-04 (iOS app — Capacitor shell groundwork)
+
+### Recent work completed
+**Convert the web app into an iOS App Store app via Capacitor** (ADR-016, ADR-017). Approach: a native `WKWebView` loads the **live deployed site** (`server.url`) rather than a static export, because the server-action/cookie backend cannot be statically exported. All Windows-doable, web-side work is done and `npm run build` passes. The Xcode/macOS steps are intentionally deferred (cannot build iOS from Windows).
+
+Done this session:
+- **Mobile web readiness:** `app/layout.tsx` — `viewport` export (`viewport-fit=cover`) + manifest/appleWebApp metadata; `app/manifest.ts` — web manifest (`/manifest.webmanifest`); `app/globals.css` — safe-area helper classes; applied `.pt-safe` (Navbar) and `.bottom-safe` (Self FAB, ShoppingList Clear-Completed + FAB). Audited grid views (`WeeklyBoard`/`FamilyWeeklyBoard` collapse to 1 col; `MealPlan` scrolls) and tab bars — already responsive, no changes needed.
+- **Capacitor scaffolding:** deps installed (`@capacitor/core`, `ios`, `app`, `browser`, `status-bar`, `splash-screen`; dev: `cli`, `assets`); `capacitor.config.ts` (root, `appId com.familyplanner.app`, `server.url` from `CAP_SERVER_URL`); `www/index.html` placeholder; `cap:*` + `assets:generate` npm scripts.
+- **Native bootstrap:** `components/NativeBootstrap.tsx` (mounted in root layout) — StatusBar/SplashScreen + OAuth deep-link handler; no-op on web (dynamic imports, SSR-safe).
+- **Native Google OAuth:** signed `state` (`lib/oauth-state.ts`, reuses `lib/crypto`) carries the user id so the callback works without the session cookie (native consent runs in the system browser). `lib/actions/google.ts getGoogleAuthUrl(native)`, `lib/google.ts buildAuthUrl(state)`, and `app/api/google/callback/route.ts` updated (redirects to `familyplanner://oauth?google=…` on native). Client connect handlers (`self/page.tsx`, `GoogleCalendarSync.tsx`) open the system browser on native. **Bonus:** adds CSRF `state` protection to the web flow too.
+
+### Files changed (iOS session, 2026-08-04)
+- New: `capacitor.config.ts`, `www/index.html`, `app/manifest.ts`, `components/NativeBootstrap.tsx`, `lib/oauth-state.ts`
+- Modified: `app/layout.tsx`, `app/globals.css`, `components/Navbar.tsx`, `components/ShoppingList.tsx`, `app/dashboard/self/page.tsx`, `components/GoogleCalendarSync.tsx`, `lib/google.ts`, `lib/actions/google.ts`, `app/api/google/callback/route.ts`, `package.json`
+- Docs: `DECISIONS.md` (ADR-016/017), `ARCHITECTURE.md`, `FEATURE_STATUS.md`, `CODEBASE_MAP.md`
+
+### Remaining to ship the iOS app (needs macOS + Xcode, or cloud-mac/CI like Codemagic/Ionic Appflow)
+1. Get an **Apple Developer account** ($99/yr).
+2. Set **`CAP_SERVER_URL=https://family-planner-app-buwf.vercel.app`** (the prod URL) in the build env before syncing. Must be HTTPS.
+3. `npm run cap:add:ios` → generates the `ios/` Xcode project.
+4. `npm run assets:generate` after adding source icon/splash art (violet `#7C5CFC`) under `assets/`. (Referenced icons `/public/icon-192.png` etc. still need to be created.)
+5. In `ios/App/App/Info.plist`, register the **`familyplanner` URL scheme** (for the OAuth return deep link).
+6. Add the native OAuth redirect handling in **Google Cloud console** — the flow still redirects through `https://…/api/google/callback`, so that URI stays whitelisted; the custom-scheme hop happens after and needs no Google config. Verify end-to-end on a device.
+7. `npm run cap:sync` → `npm run cap:open` → set signing team → archive → **TestFlight** → App Store review (watch guideline 4.2; a push-notification follow-up strengthens the case).
+
+---
+
 ## As of: 2026-06-22 (Name editing + password reset)
 
 ## Recent work completed

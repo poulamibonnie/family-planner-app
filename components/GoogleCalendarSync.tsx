@@ -14,6 +14,15 @@ export default function GoogleCalendarSync({ connected, calendarId, onRefresh }:
   const [syncMsg, setSyncMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   async function handleConnect() {
+    // See app/dashboard/self/page.tsx handleGoogleConnect: native opens consent
+    // in the system browser; web navigates in place.
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      const url = await getGoogleAuthUrl(true);
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url });
+      return;
+    }
     const url = await getGoogleAuthUrl();
     window.location.href = url;
   }

@@ -4,6 +4,20 @@ Each entry: decision, context, rationale, and consequences. Newest concerns firs
 
 ---
 
+## ADR-017 — Native Google OAuth via signed `state` (not the session cookie)
+**Status:** Accepted
+**Context:** In the native iOS shell (ADR-016) the Google consent screen must open in the system browser (SFSafariViewController) because Google blocks OAuth inside embedded WebViews (`disallowed_useragent`). That browser has a **separate cookie store** from the WKWebView, so `/api/google/callback` can no longer read the `fp_session` cookie to learn which user is connecting.
+**Decision:** Carry the initiating user's identity in the OAuth `state` parameter. `getGoogleAuthUrl(native)` (in `lib/actions/google.ts`) reads the session server-side and encodes `state = AES-256-GCM(JSON{ uid, native, ts })` via the new `lib/oauth-state.ts` (reuses `lib/crypto.ts` / `TOKEN_ENC_KEY`). The callback decodes `state` to identify the user (age-limited to 10 min, tamper-proof via GCM), falling back to the session cookie when absent. On success it redirects to `familyplanner://oauth?google=connected` for native (caught by `components/NativeBootstrap.tsx` → reloads `/dashboard/self`) or the usual web URL otherwise.
+**Rationale:** State-based identity is the standard native-OAuth pattern and needs no new secret. As a bonus it closes a pre-existing CSRF gap (the flow previously sent no `state`).
+**Consequences:** `buildAuthUrl` gains an optional `state` arg; the callback builds redirects manually (`new Response(302, Location)`) so the custom URL scheme isn't rejected. The `familyplanner` URL scheme must be registered in the iOS project's `Info.plist` (done on macOS). Token exchange/encryption logic is unchanged; `TOKEN_ENC_KEY` is only read, never rotated (ADR-004 honored).
+
+## ADR-016 — iOS app via Capacitor remote-URL shell (not React Native)
+**Status:** Accepted
+**Context:** The product needs a real App Store iOS app. The entire "backend" is Next.js Server Actions plus an iron-session cookie (ADR-002/003); there is no REST API. Server actions require a running server, so the app **cannot** be statically exported (`output: 'export'`).
+**Decision:** Wrap the app with **Capacitor**. The native `WKWebView` loads the **live deployed site** via `server.url` (`capacitor.config.ts`), rather than bundling static assets. A minimal `www/` placeholder satisfies Capacitor's `webDir` requirement. Rejected the React Native/Expo alternative, which would require rebuilding every screen natively **and** converting every server action into a token-authed REST API — a large rewrite unjustified for a v1 with only basic native needs.
+**Rationale:** Reuses ~100% of existing code (UI, server actions, cookie auth, Google, Brevo) while still producing a submittable `.ipa`. Leaves a clean path to add native capabilities (push, biometrics) as Capacitor plugins later without a rewrite.
+**Consequences:** It is a hybrid app (web UI in a native shell), which risks App Store guideline 4.2 rejection — mitigated with a native icon/splash, status-bar/safe-area handling, and a planned push-notification follow-up. Building/signing/submitting requires **macOS + Xcode** (or a cloud-mac/CI service such as Codemagic/Ionic Appflow); it cannot be done from the Windows dev machine. `CAP_SERVER_URL` must be set to the production HTTPS origin before `cap sync`. Web-side changes (viewport, safe-area insets, manifest) also benefit mobile Safari users. See ADR-017 for the OAuth consequence.
+
 ## ADR-015 — Password reset tokens stored as SHA-256 hashes
 **Status:** Accepted
 **Context:** Users need a way to recover access when they forget their password. The reset flow requires a secret token to be sent via email and validated server-side.

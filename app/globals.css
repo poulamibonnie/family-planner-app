@@ -32,3 +32,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
 }
+
+/* ── iOS safe-area helpers (Capacitor shell / notched devices) ──────────────
+   These resolve to 0 in a normal browser and to the real inset only inside a
+   viewport-fit=cover context (set in app/layout.tsx). Used by the sticky
+   Navbar and the fixed bottom controls so nothing sits under the status bar
+   or home indicator. */
+.pt-safe { padding-top: env(safe-area-inset-top); }
+.pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+.pl-safe { padding-left: env(safe-area-inset-left); }
+.pr-safe { padding-right: env(safe-area-inset-right); }
+
+/* Fixed bottom controls: keep their original inset but lift above the home
+   indicator. Compose with an element's own bottom offset via CSS var. */
+.bottom-safe { bottom: calc(var(--fp-bottom, 2rem) + env(safe-area-inset-bottom)); }
