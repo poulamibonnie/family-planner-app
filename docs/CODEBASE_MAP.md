@@ -11,13 +11,18 @@ A directory-by-directory guide to the repository. Paths are relative to the proj
 | `.env.local` | Local secrets (Turso, session, Google OAuth, Brevo, token enc key). Not for commit. |
 | `drizzle.config.*` / migrations | Drizzle Kit config and generated SQL migrations. |
 | `next.config.*`, `tsconfig.json`, `eslint` config | Standard tooling. |
+| `capacitor.config.ts` | **iOS shell config** (ADR-016). WebView loads the live site via `server.url` (`CAP_SERVER_URL`). `appId` `com.familyplanner.app`. |
+| `www/index.html` | Placeholder loading screen; Capacitor requires a `webDir` even though content is remote. |
+| `ios/` | Generated Xcode project — created by `npm run cap:add:ios` on macOS (not present on Windows). |
 
 ## `app/` — Next.js App Router
 
 | Path | Purpose |
 |---|---|
 | `app/layout.tsx` | Root layout: fonts, `globals.css`, `<html>/<body>`. |
-| `app/globals.css` | Tailwind v4 import + **`@theme inline` color system** (remaps `red-*` → warm violet `#7C5CFC`; background `#FAFAF8`). See ADR-011. |
+| `app/globals.css` | Tailwind v4 import + **`@theme inline` color system** (remaps `red-*` → warm violet `#7C5CFC`; background `#FAFAF8`). See ADR-011. Also **iOS safe-area helpers** (`.pt-safe`, `.bottom-safe`, etc.). |
+| `app/layout.tsx` | Root layout. Exports `viewport` (`viewport-fit=cover`) + `metadata.manifest`; mounts `NativeBootstrap`. |
+| `app/manifest.ts` | Web App Manifest (`/manifest.webmanifest`) — PWA install + iOS shell metadata. Icons live in `/public` (generate via `npm run assets:generate`). |
 | `app/page.tsx` | Public landing page. |
 | `app/login/page.tsx` | Login form (`<form onSubmit>`, server action `login`). |
 | `app/register/page.tsx` | Registration form (server action `register`). |
@@ -32,7 +37,8 @@ A directory-by-directory guide to the repository. Paths are relative to the proj
 
 | File | Purpose |
 |---|---|
-| `Navbar.tsx` | Top bar: logo, Self/Family mode toggle, avatar dropdown (edit name, disconnect Google, sign out). Username shows ▼ chevron; active mode tab has violet `border-b-2` underline. |
+| `NativeBootstrap.tsx` | Mounted in root layout; no-op on web. On the native iOS shell: styles StatusBar, hides SplashScreen, and handles the `familyplanner://oauth` deep-link return after Google consent. All Capacitor plugins imported dynamically (SSR-safe). See ADR-016/017. |
+| `Navbar.tsx` | Top bar: logo, Self/Family mode toggle, avatar dropdown (edit name, disconnect Google, sign out). Username shows ▼ chevron; active mode tab has violet `border-b-2` underline. Header uses `.pt-safe` for the iOS status bar. |
 | `WeeklyBoard.tsx` | **Self mode** weekly goal grid. Per-day color accents (`DAY_ACCENT`), today highlight, + icon submit on day cards (click-to-focus), week navigator (`< 📅 Week of … >`), right sidebar with **Week Overview** (SVG donut ring, "View insights" slide-in drawer) and **Quick Add** (recurring day-of-week toggles — Mo/Tu/We/Th/Fr/Sa/Su, today pre-selected, creates one goal per selected day). |
 | `FamilyWeeklyBoard.tsx` | **Family mode** equivalent of `WeeklyBoard`. Shares todo + event data for the family. Same week navigator, sidebar (Week Overview + Quick Add with recurring day toggles), and Insights drawer. Extracted from `app/dashboard/family/page.tsx`. |
 | `TodoList.tsx` | Generic todo list with custom add form, circular checkbox, split pending/completed. |
@@ -74,6 +80,7 @@ A directory-by-directory guide to the repository. Paths are relative to the proj
 |---|---|
 | `lib/session.ts` | iron-session `sessionOptions` and `SessionData` type. |
 | `lib/crypto.ts` | AES-256-GCM `encrypt`/`decrypt` for Google tokens; lazy `getKey()` reads `TOKEN_ENC_KEY` (ADR-010). |
+| `lib/oauth-state.ts` | `encodeOAuthState`/`decodeOAuthState` — signed (AES-GCM) OAuth `state` carrying `{ uid, native, ts }` so the Google callback can identify the user without a cookie (native OAuth). Reuses `lib/crypto.ts`. See ADR-017. |
 | `lib/password.ts` | `hashPassword` / `verifyPassword` using `node:crypto` scrypt. Stored format: `scrypt$<saltHex>$<hashHex>`. See ADR-013. |
 | `lib/auth-guard.ts` | `requireUserId`, `assertFamilyMember`, `assertOwnership` — server-side session guards used by all actions. See ADR-014. |
 | `lib/google.ts` | Google OAuth + Calendar v3 `fetch` client: `buildAuthUrl`, `exchangeCode`, `refreshAccessToken`, `fetchCalendarEvents`, `fetchPrimaryCalendarId`. |

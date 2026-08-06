@@ -85,6 +85,17 @@ export default function SelfPage() {
   }
 
   async function handleGoogleConnect() {
+    // On the native iOS shell, Google blocks OAuth inside the WKWebView
+    // ("disallowed_useragent"), so open consent in the system browser. The
+    // callback returns to the app via the familyplanner:// URL scheme, caught by
+    // NativeBootstrap. On web, navigate in place as before.
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      const url = await getGoogleAuthUrl(true);
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url });
+      return;
+    }
     const url = await getGoogleAuthUrl();
     window.location.href = url;
   }
@@ -544,7 +555,7 @@ export default function SelfPage() {
           <button
             onClick={() => { inputRef.current?.focus(); inputRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
             aria-label="Add task"
-            className="fixed bottom-8 right-8 flex h-16 w-16 items-center justify-center rounded-full text-white transition-all duration-200 hover:scale-110 active:scale-95 z-30"
+            className="bottom-safe fixed right-8 flex h-16 w-16 items-center justify-center rounded-full text-white transition-all duration-200 hover:scale-110 active:scale-95 z-30"
             style={{
               background: '#7C5CFC',
               boxShadow: '0 4px 12px rgba(124,92,252,0.4), 0 8px 32px rgba(124,92,252,0.2)',

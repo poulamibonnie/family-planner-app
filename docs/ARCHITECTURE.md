@@ -88,6 +88,31 @@ All write actions mutate the database directly via Drizzle. There is no separate
 - Sender: `Family Planner <familyplanner.notify@gmail.com>`.
 - Sends the pending shopping list as formatted plaintext to one or more recipient emails.
 
+## Native iOS Shell (Capacitor)
+
+The iOS app is a **Capacitor** native shell whose `WKWebView` loads the **live deployed site** (`server.url` in `capacitor.config.ts`), not a static export — the server-action/cookie backend cannot be statically exported (ADR-016). Everything (server actions, iron-session cookie, Google, Brevo) works exactly as in a browser because the WebView shares the same origin.
+
+```
+iOS device
+  ┌───────────────────────────────────────────┐
+  │ Capacitor native shell (Xcode project)     │
+  │  ┌─────────────────────────────────────┐   │
+  │  │ WKWebView → https://<prod> (remote) │───┼──▶ Next.js on Vercel (server actions, cookie)
+  │  └─────────────────────────────────────┘   │
+  │  NativeBootstrap: StatusBar / SplashScreen │
+  │  + appUrlOpen (OAuth deep-link return)      │
+  │  system browser (SFSafariViewController) ───┼──▶ Google consent (OAuth)
+  └───────────────────────────────────────────┘
+```
+
+- **Config:** `capacitor.config.ts` (root). `CAP_SERVER_URL` must be the production HTTPS origin before `cap sync`. `www/index.html` is a placeholder loading screen (Capacitor requires a `webDir`).
+- **Web-side support:** `app/layout.tsx` exports `viewport` with `viewport-fit=cover`; `app/globals.css` provides `.pt-safe` / `.bottom-safe` helpers (`env(safe-area-inset-*)`) used by the Navbar and fixed controls; `app/manifest.ts` provides the web manifest (also enables PWA install).
+- **Native bootstrap:** `components/NativeBootstrap.tsx` (mounted in the root layout) is a no-op on web; on native it styles the status bar, hides the splash, and listens for the OAuth return deep link.
+- **Build:** requires macOS + Xcode (or a cloud-mac/CI service). `npm run cap:add:ios` / `cap:sync` / `cap:open`. See ADR-016.
+
+### Google OAuth on native
+Google blocks OAuth inside embedded WebViews, so on native the consent URL opens in the system browser (`@capacitor/browser`). Because that browser can't see the app's session cookie, the initiating user's identity is carried in a signed `state` param (`lib/oauth-state.ts`, AES-256-GCM). The callback decodes `state` to find the user and redirects to `familyplanner://oauth?google=…`, which `NativeBootstrap` catches to reload the dashboard. See ADR-017.
+
 ## Major Data Flows
 
 ### Sharing a personal item to the family

@@ -66,7 +66,7 @@ export default function Navbar({ user, onNameChange }: Props) {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-stone-100 bg-white/95 backdrop-blur-sm">
+    <header className="pt-safe sticky top-0 z-30 border-b border-stone-100 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
 
         {/* Logo */}

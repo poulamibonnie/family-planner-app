@@ -12,6 +12,7 @@ import {
   refreshAccessToken,
   fetchCalendarEvents,
 } from '../google';
+import { encodeOAuthState } from '../oauth-state';
 import { generateId } from '../utils';
 import type { GoogleConnection } from '../types';
 
@@ -20,8 +21,12 @@ function redirectUri(): string {
   return `${base}/api/google/callback`;
 }
 
-export async function getGoogleAuthUrl(): Promise<string> {
-  return buildAuthUrl(redirectUri());
+// `native` = true when the connect flow is launched from the iOS shell's system
+// browser; it makes the callback redirect back to the app via its URL scheme.
+export async function getGoogleAuthUrl(native = false): Promise<string> {
+  const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
+  const state = session.userId ? encodeOAuthState(session.userId, native) : undefined;
+  return buildAuthUrl(redirectUri(), state);
 }
 
 export async function getGoogleConnection(): Promise<GoogleConnection | null> {

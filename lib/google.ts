@@ -2,7 +2,7 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 
-export function buildAuthUrl(redirectUri: string): string {
+export function buildAuthUrl(redirectUri: string, state?: string): string {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
     redirect_uri: redirectUri,
@@ -11,6 +11,11 @@ export function buildAuthUrl(redirectUri: string): string {
     access_type: 'offline',
     prompt: 'consent',
   });
+  // `state` carries a signed record of who initiated the flow (+ platform), so
+  // the callback can identify the user without a session cookie. This is what
+  // makes OAuth work from the native iOS shell, where the consent screen runs
+  // in the system browser (a separate cookie store). Also adds CSRF protection.
+  if (state) params.set('state', state);
   return `${GOOGLE_AUTH_URL}?${params}`;
 }
 

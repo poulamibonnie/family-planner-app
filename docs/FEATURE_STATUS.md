@@ -2,7 +2,7 @@
 
 Legend: ✅ Complete · 🟡 In progress · 🔵 Planned · ⛔ Blocked · ⚠️ Needs attention
 
-_Last updated: 2026-06-22 (Password reset + name editing)_
+_Last updated: 2026-08-04 (iOS app — Capacitor shell, web-side groundwork)_
 
 ## ✅ Completed
 
@@ -37,6 +37,7 @@ _Last updated: 2026-06-22 (Password reset + name editing)_
 |---|---|
 | Vercel production deployment | Env vars added to project; deploy build was the active task. `NEXT_PUBLIC_APP_URL` must match the final production domain, and the Google OAuth redirect URI must be whitelisted in Google Cloud console for the production URL. |
 | Per-action authorization | Shipped (ADR-014). All server actions now verify session ownership via `lib/auth-guard.ts`. Client-supplied user/family IDs are validated against the session. |
+| iOS App Store app (Capacitor) | **Web-side groundwork done & building** (ADR-016/017): viewport + safe-area insets, web manifest, Capacitor deps + `capacitor.config.ts` + `www/`, `NativeBootstrap`, and native-aware Google OAuth (signed `state`). **Remaining (needs macOS/Xcode or cloud-mac/CI):** set `CAP_SERVER_URL` to the prod HTTPS URL, `npm run cap:add:ios`, generate icons/splash (`npm run assets:generate`), register the `familyplanner` URL scheme in `Info.plist`, whitelist the native redirect in Google Cloud, then archive → TestFlight → App Store. Apple Developer account ($99/yr) required. |
 
 ## 🔵 Planned / Backlog
 

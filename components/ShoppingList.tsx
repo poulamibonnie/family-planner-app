@@ -410,7 +410,7 @@ export default function ShoppingList({ items, userName, familyName, onAdd, onTog
       {checked.length > 0 && (
         <button
           onClick={onClearCompleted}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 flex h-10 items-center gap-1.5 rounded-xl px-5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg active:scale-95 z-30"
+          className="bottom-safe fixed left-1/2 -translate-x-1/2 flex h-10 items-center gap-1.5 rounded-xl px-5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-lg active:scale-95 z-30"
           style={{
             background: '#4F7CFF',
             boxShadow: '0 4px 12px rgba(79,124,255,0.35)',
@@ -427,7 +427,7 @@ export default function ShoppingList({ items, userName, familyName, onAdd, onTog
       <button
         onClick={() => textRef.current?.focus()}
         aria-label="Add item"
-        className="fixed bottom-8 right-8 flex h-16 w-16 items-center justify-center rounded-full text-white transition-all duration-200 hover:scale-110 active:scale-95 z-30"
+        className="bottom-safe fixed right-8 flex h-16 w-16 items-center justify-center rounded-full text-white transition-all duration-200 hover:scale-110 active:scale-95 z-30"
         style={{
           background: '#4F7CFF',
           boxShadow: '0 4px 12px rgba(79,124,255,0.4), 0 8px 32px rgba(79,124,255,0.2)',
